@@ -1,18 +1,19 @@
 # .gitignore
 
-venv
-
 .env
 
 ignore
 
-__pycache__/
+__pycache__
 *.pyc
-.DS_Store
-.idea/
 *.log
 
 # pytest
 .pytest_cache
 # ruff
 .ruff_cache
+
+# --- UV ---
+.venv/
+uv.lock
+.uv/
