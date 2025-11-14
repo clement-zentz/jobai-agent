@@ -1,18 +1,20 @@
 # Makefile
+.PHONY: up build restart logs down
 
 dc=docker compose
 
 up:
-$(dc) up -d
+	$(dc) up -d
 
 build:
-$(dc) build
+	$(dc) build
+
+restart:
+	$(dc) restart
 
 logs:
-$(dc) logs
+	$(dc) logs
 
 down:
-$(dc) down
-
-
+	$(dc) down
 
