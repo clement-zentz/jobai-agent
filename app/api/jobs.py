@@ -9,7 +9,7 @@ from sqlmodel import select
 from app.core.database import get_session
 from app.models.job import JobOffer
 
-router = APIRouter(prefix="jobs", tags=["jobs"])
+router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 
 # 🟢 CREATE
