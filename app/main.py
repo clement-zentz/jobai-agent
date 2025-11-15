@@ -5,9 +5,7 @@ from fastapi import FastAPI
 from app.api import jobs
 from app.lifespan import lifespan
 
-app = FastAPI(title="JobAI Agent")
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(title="JobAI Agent", lifespan=lifespan)
 
 # Include routes
 app.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
