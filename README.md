@@ -2,7 +2,11 @@
 
 # 🤖 JobAI Agent
 
-An AI agent applying for job offers.
+An AI agent that helps you find and filter job opportunities.
+
+Due to Terms of Service restrictions and bot-detection policies on major job platforms, this project currently focuses on data collection, parsing, and intelligent filtering of job offers.
+
+A fully automated application flow may be added in the future, but a semi-automated application process is sufficient for now and avoids violating platform rules.
 
 ## 🐘 Database Configuration (PostgreSQL)
 
@@ -28,7 +32,7 @@ Notes:
 Build and start the stack:
 
 ```bash
-docker compose up --build
+docker compose up --build --watch
 ```
 
 The API will be available at http://localhost:8000 and PostgreSQL at localhost:5432.
