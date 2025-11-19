@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # app/extraction/parsers/linkedin.py
 
 from bs4 import BeautifulSoup
@@ -13,26 +14,40 @@ class LinkedInParser(EmailParser):
         soup = BeautifulSoup(html, "html.parser")
         jobs = []
 
-        for card in soup.select("a.job-card-container"):
-            title_elem = card.select_one(".job-card-title")
-            company_elem = card.select_one(".job-card-company")
-            
-            if not title_elem or not company_elem:
-                continue
-                
-            title = title_elem.get_text(strip=True)
-            company = company_elem.get_text(strip=True)
-            url = card["href"]
+        # 1. Find all job title links on reliable inline styles
+        title_links = soup.find_all(
+            "a",
+            style=lambda s: s is not None
+            and "font-size: 16px" in s
+            and "line-height: 1.25" in s,
+        )
 
-            jobs.append({
+        for title_a in title_links:
+            title = title_a.get_text(strip=True)
+            url = title_a.get("href")
+
+        # 2. Company + location are in the next <p> sibling
+        company = ""
+        location = ""
+
+        # Move to the next p tag after title_a
+        next_p = title_a.find_next("p")
+        if next_p:
+            text = next_p.get_text(" ", strip=True)
+            # "Company name · Location"
+            if "." in text:
+                company, location = [x.strip() for x in text.split("·", 1)]
+            else:
+                company = text
+
+        jobs.append(
+            {
                 "title": title,
                 "company": company,
-                "location": "",
+                "location": location,
                 "url": url,
                 "platform": "linkedin",
-            })
+            }
+        )
 
         return jobs
-
-
-        
