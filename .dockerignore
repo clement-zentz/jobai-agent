@@ -1,3 +1,25 @@
 # .dockerignore
 
 .venv
+
+.git
+.gitignore
+
+ignore
+
+__pycache__/
+
+.vscode/
+
+# Logs / dumps
+*.log
+logs/
+*.sqlite3
+
+# Local env / config
+.env
+.env.*
+*.env
+
+# except
+!.env.example
