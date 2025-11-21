@@ -19,6 +19,8 @@ services:
   
         - action: rebuild
           path: ./uv.lock
+    volumes:
+      - ./app/tests/email_fixtures:/app/tmp_email_fixt
 
   postgres:
       image: postgres:16-alpine

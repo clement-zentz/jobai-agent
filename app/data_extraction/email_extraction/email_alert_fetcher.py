@@ -14,6 +14,8 @@ from .parsers.indeed import IndeedParser
 from .parsers.linkedin import LinkedInParser
 from .provider import detect_provider
 
+from app.core.config import settings
+
 
 class EmailExtractionService:
     """Fetch job alerts from an IMAP inbox and parse them into job dicts."""
@@ -62,7 +64,8 @@ class EmailExtractionService:
             if not html:
                 continue
 
-            platform = parser.__class__.__name__.replace("Parser", "").lower()
+            platform = parser.__class__.__name__.replace(
+                "Parser", "").lower()
 
             self.generate_tests_fixtures(platform=platform, html=html)
 
@@ -108,11 +111,15 @@ class EmailExtractionService:
 
     @staticmethod
     def generate_tests_fixtures(platform: str, html: str):
-        ROOT_DIR = Path(__file__).resolve().parent.parent.parent.parent
+        """"Write HTML to test fixtures directory only if TEST_MODE=True."""
+        if not settings.debug:
+            return # no fixture generation in production
+        
+        fixture_root = Path(settings.fixture_dir)
+
+        fixture_root.mkdir(parents=True, exist_ok=True)
+
         uid = secrets.token_hex(4)
-        fixture_dir = (
-            ROOT_DIR / "tests" / f"email_fixtures/{platform}_sample_{uid}.html"
-        )
-        os.makedirs(os.path.dirname(fixture_dir), exist_ok=True)
-        with open(fixture_dir, "w", encoding="utf-8") as f:
-            f.write(html)
+        file_path = fixture_root / f"{platform}_email_{uid}.html"
+
+        file_path.write_text(html, encoding="utf-8")
