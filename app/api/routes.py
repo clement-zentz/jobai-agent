@@ -17,8 +17,6 @@ router = APIRouter(prefix="/scrape", tags=["scraping"])
 
 
 class EmailProcessingRequest(BaseModel):
-    email_address: str = Field(..., examples=["user@example.com"])
-    # password: str = Field(..., description="IMAP/Email password or app password")
     folder: str = Field(default="INBOX", examples=["INBOX"])
     days_back: int = Field(
         1, ge=1, le=30, description="How many days back to look for alerts"
@@ -47,15 +45,13 @@ async def process_email_datas(
     """
     email_address = os.getenv("EMAIL_ADDRESS")
     password = os.getenv("EMAIL_PASSWORD")
-
+    
     if not email_address or not password:
         raise RuntimeError("email_address or password is not set.")
 
     service = JobIngestionService(session)
     new_jobs = await service.ingest_from_email(
-        # email_address=payload.email_address,
         email_address=email_address,
-        # password=payload.password,
         password=password,
         folder=payload.folder,
         days_back=payload.days_back,
