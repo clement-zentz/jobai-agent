@@ -5,7 +5,9 @@ from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlmodel import SQLModel
 
-from .config import settings
+from .config import get_settings
+
+settings = get_settings()
 
 engine = create_async_engine(settings.database_url, echo=True)
 async_session_local = async_sessionmaker(
