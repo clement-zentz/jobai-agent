@@ -3,6 +3,7 @@
 
 from typing import Optional
 
+import logging
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -11,6 +12,7 @@ from app.data_extraction.email_extraction.email_alert_fetcher import (
 )
 from app.models.job import JobOffer
 
+logger = logging.getLogger(__name__)
 
 class JobIngestionService:
     """Service to ingest job offers from various sources into the database"""
@@ -25,27 +27,18 @@ class JobIngestionService:
         folder: str = "INBOX",
         days_back: int = 1,
     ) -> list[JobOffer]:
-        """
-        Fetch job alerts from email and save them to database.
-
-        Args:
-            email_address: email address to fetch from
-            password: Email password
-            folder: IMAP folder to search (default: INBOX)
-            days_back: Number of days to look back for emails
-
-        Returns:
-            List of newly created JobOffer instances
-        """
+        """Fetch job alerts from email and save them to database."""
         extractor = EmailExtractionService(email_address, password, folder)
         raw_jobs = extractor.fetch_recent_jobs(days_back)
 
         new_jobs: list[JobOffer] = []
 
         for job_data in raw_jobs:
+
             # check if job already exists by source_uid or unique URL
             existing = await self._find_existing_job(
-                source_uid=job_data.get("source_uid"), url=job_data.get("url")
+                source_uid=job_data.get("source_uid"), 
+                url=job_data.get("url")
             )
 
             if existing:
@@ -64,6 +57,7 @@ class JobIngestionService:
             new_jobs.append(job_offer)
 
         await self.session.commit()
+
         return new_jobs
 
     async def _find_existing_job(
@@ -72,14 +66,14 @@ class JobIngestionService:
         """Check if a job already exists in the database."""
         if source_uid:
             statement = select(JobOffer).where(JobOffer.source_email_id == source_uid)
-            result = await self.session.exec(statement)
-            job = result.first()
+            result = await self.session.execute(statement)
+            job = result.scalars().first()
             if job:
                 return job
 
         if url:
             statement = select(JobOffer).where(JobOffer.url == url)
-            result = await self.session.exec(statement)
-            return result.first()
+            result = await self.session.execute(statement)
+            return result.scalars().first()
 
         return None
