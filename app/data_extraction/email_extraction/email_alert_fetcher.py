@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import List, Optional
+from slugify import slugify
 
 from .imap_client import IMAPClient
 from .parser_base import EmailParser
@@ -15,7 +16,11 @@ from .parsers.linkedin import LinkedInParser
 from .provider import detect_provider
 
 from app.core.config import settings
+from app.utils.truncate_string import shorten_text
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class EmailExtractionService:
     """Fetch job alerts from an IMAP inbox and parse them into job dicts."""
@@ -66,10 +71,25 @@ class EmailExtractionService:
 
             platform = parser.__class__.__name__.replace(
                 "Parser", "").lower()
+            
+            # parse Date header to datetime for fixture naming
+            header_date = msg.get("Date")
+            msg_dt: datetime | None = None
+            if header_date:
+                try:
+                    msg_dt = parsedate_to_datetime(header_date)
+                except (TypeError, ValueError):
+                    msg_dt = None
 
-            self.generate_tests_fixtures(platform=platform, html=html)
+            self.generate_tests_fixtures(
+                platform=platform, 
+                html=html, 
+                msg_date=msg_dt,
+                subject=subject,
+            )
 
             parsed = parser.parse(html)
+
             for job in parsed:
                 job.setdefault("platform", platform)
                 job["source_uid"] = uid
@@ -82,7 +102,8 @@ class EmailExtractionService:
 
         return jobs
 
-    def _match_parser(self, sender: str, subject: str) -> Optional[EmailParser]:
+    def _match_parser(
+            self, sender: str, subject: str) -> Optional[EmailParser]:
         for parser in self.parsers:
             if parser.matches(sender, subject):
                 return parser
@@ -109,9 +130,16 @@ class EmailExtractionService:
         cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
         return msg_dt >= cutoff
 
+
+    # TODO: Gradually delete older fixtures.
     @staticmethod
-    def generate_tests_fixtures(platform: str, html: str):
-        """"Write HTML to test fixtures directory only if TEST_MODE=True."""
+    def generate_tests_fixtures(
+        platform: str, 
+        html: str, 
+        msg_date: datetime | None = None,
+        subject: str | None = None,
+    ):
+        """"Write HTML to test fixtures directory only if DEBUG=True."""
         if not settings.debug:
             return # no fixture generation in production
         
@@ -119,7 +147,15 @@ class EmailExtractionService:
 
         fixture_root.mkdir(parents=True, exist_ok=True)
 
-        uid = secrets.token_hex(4)
-        file_path = fixture_root / f"{platform}_email_{uid}.html"
+        if msg_date is None or not subject:
+            # fallback
+            msg_date = datetime.now(timezone.utc)
+            subject = secrets.token_hex(4)
+        else: 
+            slug_sbj = slugify(shorten_text(subject))
+        
+        ts = msg_date.astimezone(timezone.utc).strftime("%Y-%m-%d")
+
+        file_path = fixture_root / f"{platform}_{slug_sbj}_{ts}.html"
 
         file_path.write_text(html, encoding="utf-8")
