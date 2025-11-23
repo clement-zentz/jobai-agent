@@ -17,6 +17,8 @@ from .provider import detect_provider
 
 from app.core.config import settings
 from app.utils.truncate_string import shorten_text
+from app.utils.clean_fixture import clean_fixture
+
 
 import logging
 
@@ -59,6 +61,7 @@ class EmailExtractionService:
             subject = IMAPClient.decode(msg.get("Subject"))
 
             parser = self._match_parser(sender, subject)
+
             if not parser:
                 continue
 
@@ -130,8 +133,6 @@ class EmailExtractionService:
         cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
         return msg_dt >= cutoff
 
-
-    # TODO: Gradually delete older fixtures.
     @staticmethod
     def generate_tests_fixtures(
         platform: str, 
@@ -139,23 +140,33 @@ class EmailExtractionService:
         msg_date: datetime | None = None,
         subject: str | None = None,
     ):
-        """"Write HTML to test fixtures directory only if DEBUG=True."""
+        """
+        Generate fixture with extracted email:
+        - brut fixture for tests
+        - net fixture for human reader
+        """
         if not settings.debug:
             return # no fixture generation in production
-        
-        fixture_root = Path(settings.fixture_dir)
 
-        fixture_root.mkdir(parents=True, exist_ok=True)
+        subject = subject if subject else secrets.token_hex(4)
+        msg_date = msg_date if msg_date else datetime.now(timezone.utc)
 
-        if msg_date is None or not subject:
-            # fallback
-            msg_date = datetime.now(timezone.utc)
-            subject = secrets.token_hex(4)
-        else: 
-            slug_sbj = slugify(shorten_text(subject))
-        
+        slug_sbj = slugify(shorten_text(subject))
         ts = msg_date.astimezone(timezone.utc).strftime("%Y-%m-%d")
 
-        file_path = fixture_root / f"{platform}_{slug_sbj}_{ts}.html"
+        # Brut email fixture
+        brut_fixture_dir = Path(settings.brut_fixture_dir)
+        brut_fixture_dir.mkdir(parents=True, exist_ok=True)
 
-        file_path.write_text(html, encoding="utf-8")
+        brut_file_path = brut_fixture_dir / f"{platform}_brut_{slug_sbj}_{ts}.html"
+        brut_file_path.write_text(html, encoding="utf-8")
+        
+        # Net email fixture
+        net_fixture_dir = Path(settings.net_fixture_dir)
+        net_fixture_dir.mkdir(parents=True, exist_ok=True)
+
+        cleaned_html = clean_fixture(html)
+
+        net_file_path = net_fixture_dir / f"{platform}_net_{slug_sbj}_{ts}.html"
+        net_file_path.write_text(cleaned_html, encoding="utf-8")
+
