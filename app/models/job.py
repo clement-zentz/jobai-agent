@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # app/models/job.py
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import ClassVar, Optional
 
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, SQLModel, DateTime, Column
 
 
 class JobOffer(SQLModel, table=True):
@@ -21,8 +21,8 @@ class JobOffer(SQLModel, table=True):
     platform: str = Field(nullable=False)
 
     date_scraped: datetime = Field(
-        default_factory=datetime.now,
-        nullable=False,
+        sa_column=Column(DateTime(timezone=True)),
+        default_factory=lambda: datetime.now(timezone.utc)
     )
 
     # New field for email ingestion
