@@ -35,7 +35,7 @@ class LinkedInParser(EmailParser):
 
         job_cards = soup.find_all(
             "td",
-            _class="pt-3",
+            class_="pt-3",
             attrs={"data-test-id": "job-card"},
         )
 
