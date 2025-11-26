@@ -9,8 +9,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.database import get_session
 
 # email data processing
-from app.data_ingestion.job_ingestion import JobIngestionService
-from app.data_ingestion.scraper_ingestion import ingest_scraped_jobs
+from app.ingestion.email_ingestion import JobIngestionService
+from app.ingestion.web_ingestion import ingest_scraped_jobs
 from app.scrapers.indeed import IndeedScraper
 
 router = APIRouter(prefix="/scrape", tags=["scraping"])

@@ -7,7 +7,7 @@ import logging
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.data_extraction.email_extraction.email_alert_fetcher import (
+from app.extraction.email.email_alert_fetcher import (
     EmailExtractionService,
 )
 from app.models.job import JobOffer
