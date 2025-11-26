@@ -19,11 +19,11 @@ class JobOffer(SQLModel, table=True):
     description: Optional[str] = Field(default=None)
     url: str = Field(nullable=False, index=True)
     platform: str = Field(nullable=False)
+    easy_apply: Optional[bool] = Field(default=None)
 
     date_scraped: datetime = Field(
         sa_column=Column(DateTime(timezone=True)),
         default_factory=lambda: datetime.now(timezone.utc)
     )
 
-    # New field for email ingestion
     source_email_id: Optional[str] = Field(default=None, nullable=True)

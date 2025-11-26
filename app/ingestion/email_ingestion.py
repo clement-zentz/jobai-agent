@@ -48,6 +48,7 @@ class JobIngestionService:
                 title=job_data.get("title", ""),
                 company=job_data.get("company", ""),
                 location=job_data.get("location", ""),
+                easy_apply=job_data.get("easy_apply", ""),
                 url=job_data.get("url", ""),
                 platform=job_data.get("platform", ""),
                 source_email_id=job_data.get("source_uid"),

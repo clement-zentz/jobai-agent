@@ -77,10 +77,15 @@ class LinkedInParser(EmailParser):
                 else:
                     company = text
 
-            # --- 3. Easy apply / flags (optional) ---
-            easy_apply = False
 
-            easy_apply_p = card.find("p", text=re.compile("Candidature simplifiée"))
+            # --- 4. Easy apply / flags (optional) ---
+            easy_apply = None
+
+            easy_apply_p = card.find(
+                string=re.compile(
+                    r"(Candidature simplifiée|Easy Apply)", re.I
+                )
+            )
 
             if easy_apply_p:
                 easy_apply = True
