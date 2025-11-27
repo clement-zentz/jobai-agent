@@ -21,6 +21,10 @@ class JobOffer(SQLModel, table=True):
     platform: str = Field(nullable=False)
     easy_apply: Optional[bool] = Field(default=None)
     active_hiring: Optional[bool] = Field(default=None)
+    posted_at: Optional[datetime] = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=True))
+    )
 
     date_scraped: datetime = Field(
         sa_column=Column(DateTime(timezone=True)),

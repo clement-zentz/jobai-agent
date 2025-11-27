@@ -50,6 +50,7 @@ class JobIngestionService:
                 location=job_data.get("location", ""),
                 active_hiring=job_data.get("active_hiring", ""),
                 easy_apply=job_data.get("easy_apply", ""),
+                posted_at=job_data.get("posted_at", None),
                 url=job_data.get("url", ""),
                 platform=job_data.get("platform", ""),
                 source_email_id=job_data.get("source_uid"),

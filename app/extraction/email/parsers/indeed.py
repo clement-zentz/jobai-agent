@@ -1,10 +1,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # app/data_extraction/email_extraction/parsers/indeed.py
 
+import re, logging
+
 from bs4 import BeautifulSoup
 from app.extraction.email.parser_base import EmailParser
 
+from datetime import datetime, timedelta, timezone
 
+
+logger = logging.getLogger(__name__)
 
 class IndeedParser(EmailParser):
     """
@@ -31,136 +36,114 @@ class IndeedParser(EmailParser):
 
     def parse(self, html: str) -> list[dict]:
         soup = BeautifulSoup(html, "html.parser")
+
+        job_blocks = soup.select("td.pb-24 > a")
         jobs: list[dict] = []
 
-        offer_cells = soup.find_all(
-            "td",
-            style=lambda s: s is not None and "padding:0px 0px 32px" in s,
-            class_=lambda c: bool(c and "pb-24" in c.split())
-        )
+        for a_tag in job_blocks:
+            container = a_tag.select_one("table")
+            if not container:
+                continue
+    
+            # --- Title ---
+            title_tag = container.select_one("h2 a")
+            title = title_tag.get_text(strip=True) \
+                if title_tag else None
+            url = title_tag["href"] if title_tag else None
 
-        for cell_td in offer_cells:
-            # ----- 0. Extract job URL -----
-            root_a = cell_td.find("a", href=True)
+            # --- Company & Rating ---
+            company = None
+            rating = None
 
-            # TODO: add title_a href fallback
-            if not root_a:
-                continue 
+            info_cells = container.select(
+                "tr:nth-of-type(2) table tr td")
 
-            job_url = root_a.get("href")
-
-            # ----- 1. Title -----
-            title_a = cell_td.find("a", class_="strong-text-link")
-
-            if not title_a:
-                h2 = cell_td.find("h2")
-                title_text_el = h2 if h2 else None
-            else:
-                title_text_el = title_a
-
-            if not title_text_el:
-                continue # cannot extract job without title
-
-            title = title_text_el.get_text(strip=True)
-
-            # ----- 2. Company & Rating -----
-            company = ""
-            rating: float | None = None
-
-            title_tr = title_text_el.find_parent("tr")
-            company_tr = title_tr.find_next_sibling("tr") if title_tr else None
-
-            if company_tr:
-                tds = company_tr.find_all("td")
-                if tds:
-                    # First <td> text is company
-                    company = tds[0].get_text(" ", strip=True)
-
-                # strong row can be rating
-                strong = company_tr.find("strong")
-                if strong:
-                    raw_rating = strong.get_text(strip=True).replace(",", ".")
+            if info_cells:
+                company = info_cells[0].get_text(strip=True)
+                if len(info_cells) > 1:
                     try:
-                        rating = float(raw_rating)
+                        rating = float(info_cells[1].get_text(strip=True))
                     except ValueError:
                         rating = None
                 
-            # ----- 3. Location
-            location = ""
-            location_tr = None
+            # --- Location ---
+            location_tag = container.select_one("tr:nth-of-type(3) td")
+            location = location_tag.get_text(strip=True) \
+                if location_tag else None
 
-            if company_tr:
-                location_tr = company_tr.find_next_sibling("tr")
+            # --- Salary (optional) ---
+            salary_tag = container.select_one("td > table[bgcolor]")
+            salary = None
+            if salary_tag:
+                salary = salary_tag.get_text(strip=True)
 
-            if location_tr:
-                location = location_tr.get_text(" ", strip=True)
+            # --- Simplified apply (optional) ---
+            easy_apply = bool(container.select_one("img[alt=' ']"))
 
-            # Fallback: search for something like "Paris (75)" within cell
-            if not location:
-                for td in cell_td.find_all("td"):
-                    txt = td.get_text(" ", strip=True)
-                    if "(" in txt and ")" in txt:
-                        location = txt
-                        break
+            # --- Summary ---
+            summary = None
 
-            # ----- 4. Salary -----
-            salary = ""
-            salary_tr = None
+            all_rows = container.select("tr")
 
-            if location_tr:
-                salary_tr = location_tr.find_next_sibling("tr")
+            summary_tag = None
+            for row in all_rows:  
+                # Can have one or more cells  
+                cells = row.find("td")
+                if not cells:
+                    continue
 
-            if salary_tr:
-                salary_text = salary_tr.get_text(" ", strip=True)
-                if "€" in salary_text or "$" in salary_text:
-                    salary = salary_text
+                # Description line always have no 
+                # nested tables and contains long text
+                if not cells.find("tables") and \
+                    len(cells.get_text(strip=True)) > 40:
+                    summary_tag = cells
+                break
 
-            # ----- 4.5 Simplified application process
-            easy_apply = False
-            easy_apply_tr = None
+            summary = summary_tag.get_text(strip=True) \
+                if summary_tag else None
 
-            easy_apply_tr = cell_td.find(
-                "tr", 
-                style=lambda s: s is not None 
-                and "color:#2d2d2d;font-size:14px;line-height:21px" in s
-            )
+            # --- Date posted ---
+            posted_at = None
 
-            if easy_apply_tr:
-                easy_apply = True
+            posted_at_tag = container.select_one("td[style*='font-size:12px']")
 
-            # ----- 5. Extract Summary -----
-            summary = ""
-            summary_tr = None
+            if posted_at_tag:
+                posted_at_text = posted_at_tag.get_text("", strip=True)
+                if posted_at_text:
 
-            if easy_apply_tr:
-                summary_tr = easy_apply_tr.find_next_sibling("tr")
-            elif salary_tr:
-                summary_tr = salary_tr.find_next_sibling("tr")
-            elif location_tr:
-                summary_tr = location_tr.find_next_sibling("tr")
+                    # Normalize non-breaking spaces and unicode apostrophes
+                    normalized = (
+                        posted_at_text
+                        .replace("\u00A0", " ") # NBSP --> normal space
+                        .replace("’", "'") # curly apostrophe --> straight
+                        .lower()
+                    )
 
-            if summary_tr:
-                summary = summary_tr.get_text(" ", strip=True)
+                    if "publié à l'instant" in normalized:
+                        posted_at = datetime.now(timezone.utc)
 
-            if not summary:
-                summary_td = cell_td.find(
-                    "td",
-                    style=lambda s: s is not None 
-                    and "padding:0;color:#767676;font-size:14px;line-height:21px" in s
-                )
-                if summary_td:
-                    summary = summary_td.get_text(" ", strip=True)
+                    else:
+                        numbers = re.findall(r'\d+', normalized)
+                        if numbers:
+                            days_ago_int = int(numbers[0])
+                            # today - days_ago = days_back
+                            today, days_ago = datetime.now(timezone.utc), timedelta(days=days_ago_int)
+                            posted_at = today - days_ago
+                        else:
+                            logger.warning(
+                                "[IndeedParser] Could not parse posted_at text: %r",
+                                posted_at_text
+                            )
 
-            # TODO: add published_at
-
-            # ----- 6. Build job dict -----
+            # --- Build job dict ---
             jobs.append(
                 {
                     "title": title,
                     "company": company,
                     "location": location,
-                    "url": job_url,
+                    "url": url,
                     "summary": summary,
+                    "posted_at": posted_at,
                     "salary": salary,
                     "rating": rating,
                     "easy_apply": easy_apply,
