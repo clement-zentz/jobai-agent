@@ -16,11 +16,12 @@ services:
             - .venv/
             - __pycache__/
             - .git/
+            - .pytest_cache/
   
         - action: rebuild
           path: ./uv.lock
     volumes:
-      - ./app/tests/email_fixtures:/app/tmp_email_fixt
+      - ./app/tests/email_fixtures:/app/app/tests/email_fixtures
 
   postgres:
       image: postgres:16-alpine

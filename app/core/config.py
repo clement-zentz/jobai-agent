@@ -4,19 +4,17 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_url: str = ""
+    database_url: str
     debug: bool = False
-    brut_fixture_dir: str = "tmp_email_fixt/brut_data"
-    net_fixture_dir: str = "tmp_email_fixt/net_data"
+    raw_fixture_dir: str
+    net_fixture_dir: str 
 
     model_config = {
         "env_file": ".env",
         "extra": "ignore",
     }
 
-
 def get_settings() -> Settings:
-    return Settings()
-
+    return Settings() # type: ignore[call-arg]
 
 settings = get_settings()

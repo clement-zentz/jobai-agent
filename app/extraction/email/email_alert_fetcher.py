@@ -154,12 +154,12 @@ class EmailExtractionService:
         slug_sbj = slugify(shorten_text(subject))
         ts = msg_date.astimezone(timezone.utc).strftime("%Y-%m-%d")
 
-        # Brut email fixture
-        brut_fixture_dir = Path(settings.brut_fixture_dir)
-        brut_fixture_dir.mkdir(parents=True, exist_ok=True)
+        # Raw email fixture
+        raw_fixture_dir = Path(settings.raw_fixture_dir)
+        raw_fixture_dir.mkdir(parents=True, exist_ok=True)
 
-        brut_file_path = brut_fixture_dir / f"{platform}_brut_{slug_sbj}_{ts}.html"
-        brut_file_path.write_text(html, encoding="utf-8")
+        raw_file_path = raw_fixture_dir / f"{platform}_raw_{slug_sbj}_{ts}.html"
+        raw_file_path.write_text(html, encoding="utf-8")
         
         # Net email fixture
         net_fixture_dir = Path(settings.net_fixture_dir)
