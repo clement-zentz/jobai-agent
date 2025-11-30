@@ -45,7 +45,7 @@ class IndeedParser(EmailParser):
             if not container:
                 continue
 
-            rows = container.select("tr")
+            rows = container.find_all("tr", recursive=False)
     
             # --- Title + URL ---
             title = None
@@ -68,20 +68,20 @@ class IndeedParser(EmailParser):
                 if company_cells:
                     company = company_cells[0].get_text(strip=True)
 
-                    if len(company_cells) > 1:
-                        for cell in company_cells:
-                            strong = cell.find("strong")
-                            if strong:
-                                try:
-                                    rating = float(strong.get_text(strip=True))
-                                except ValueError:
-                                    pass
+                    for cell in company_cells:
+                        strong = cell.find("strong")
+                        if strong:
+                            try:
+                                rating = float(strong.get_text(strip=True))
+                            except ValueError:
+                                pass
 
             # --- Location ---
             location = None
-            location_tag = rows[1].find_next_sibling("tr")
-            if location_tag:
-                location = location_tag.get_text(strip=True)
+            if len(rows) >= 3:
+                location_tag = rows[2]
+                if location_tag:
+                    location = location_tag.get_text(strip=True)
 
             # --- Salary (optional) ---
             salary = None
