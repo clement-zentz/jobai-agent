@@ -51,6 +51,14 @@ class IMAPClient:
             return None
         return email.message_from_bytes(raw)
 
+    def delete_email(self, uid: str):
+        if self.conn is None:
+            raise RuntimeError("IMAP connection not established")
+        # Mark email as deleted
+        self.conn.store(uid, '+FLAGS', r'(\Deleted)')
+        # Permanently remove emails marked as deleted
+        self.conn.expunge()
+
     @staticmethod
     def decode(value: Optional[str]) -> str:
         if not value:

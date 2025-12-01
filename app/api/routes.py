@@ -10,6 +10,7 @@ from app.core.database import get_session
 
 # email data processing
 from app.ingestion.email_ingestion import JobIngestionService
+from app.extraction.email.email_alert_fetcher import EmailExtractionService
 from app.ingestion.web_ingestion import ingest_scraped_jobs
 from app.scrapers.indeed import IndeedScraper
 
@@ -77,3 +78,25 @@ async def process_email_datas(
             for job in new_jobs
         ],
     }
+
+class RemoveEmailRequest(BaseModel):
+    days_back: int = Field(
+        3, ge=1, le=30, 
+        description="Remove emails older than this many days")
+    folder: str = Field(default="INBOX", examples=["INBOX"])
+
+@router.post("/remove-emails/")
+async def remove_older_emails(payload: RemoveEmailRequest,):
+    """Remove old alert emails from the inbox"""
+    email_address = os.getenv("EMAIL_ADDRESS")
+    password = os.getenv("EMAIL_PASSWORD")
+    if not email_address or not password:
+        raise RuntimeError("email_address or password is not set")
+    
+    service = EmailExtractionService(
+        email_address=email_address,
+        password=password,
+        folder=payload.folder,
+    )
+    deleted_count = service.remove_old_alert_email(days_back=payload.days_back)
+    return {"status": "success", "deleted": deleted_count}

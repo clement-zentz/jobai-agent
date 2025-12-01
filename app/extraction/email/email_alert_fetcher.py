@@ -135,53 +135,54 @@ class EmailExtractionService:
                 msg_dt = None
         return msg_dt
 
+    def remove_old_alert_email(self, days_back: int = 3):
+        """Remove alert emails and fixtures older than days_back"""
 
+        keywords = ["python", "backend", "data", "engineer", "developer", "ai"]
 
+        self.client.connect()
+        self.client.select_folder(self.folder)
 
+        # Search ALL emails
+        uids = self.client.search("All")
 
+        today = datetime.now(timezone.utc)
+        cutoff_date = today - timedelta(days=days_back)
 
+        remove_old_fixtures()
 
+        deleted_count = 0
+        for uid in uids:
+            msg = self.client.fetch_email(uid)
+            if not msg:
+                continue
 
+            sender = IMAPClient.decode(msg.get("From"))
+            subject = IMAPClient.decode(msg.get("Subject"))
 
+            sender_l = sender.lower()
+            subject_l = subject.lower()
 
+            is_linkedin = "alert@indeed.com" in sender_l
+            is_indeed = "jobalerts-noreply@linkedin.com" in sender_l
+            matches_kw = any(kw in subject_l for kw in keywords)
 
+            # Skip email that are not job alerts
+            if not (is_linkedin or is_indeed) and matches_kw:
+                continue
 
+            msg_date = self.parse_msg_date(msg)
+            if not msg_date:
+                continue # cannot delete an email without a valid date
 
+            # Remove alert email older than 3 days
+            # ex: 2025-11-20 < 2025-11-25
+            if msg_date < cutoff_date:
+                self.client.delete_email(uid)
+                deleted_count += 1
+                logger.info(f"Deleted email: {subject} (UID: {uid}) date:{msg_date}")
 
+        if self.client.conn is not None:
+            self.client.conn.logout()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return deleted_count

@@ -87,3 +87,33 @@ def generate_tests_fixtures(
 
     net_file_path = net_fixture_dir / f"{platform}_net_{slug_sbj}_{ts}.html"
     net_file_path.write_text(cleaned_html, encoding="utf-8")
+
+def remove_old_fixtures():
+    raw_fixture_dir = Path(settings.raw_fixture_dir)
+    net_dixture_dir = Path(settings.net_fixture_dir)
+
+    # Pattern: *_2025-11-30.html
+    pattern = r'_(\d{4}-\d{2}-\d{2})\.html$'
+    cutoff_date = datetime.now().date() - timedelta(days=3)
+
+    # Function to check file age
+    def is_older_than_3_days(filename: str) -> bool:
+        match = re.search(pattern, filename)
+        if not match:
+            return False # ignore files without date
+        try:
+            file_date = datetime.strptime(
+                match.group(1), "%Y-%m-%d").date()
+            return file_date < cutoff_date
+        except ValueError:
+            return False
+    
+    # Remove from raw fixtures
+    for f in raw_fixture_dir.glob("*.html"):
+        if f.is_file() and is_older_than_3_days(f.name):
+            f.unlink()
+
+    # Remove from net fixtures
+    for f in net_dixture_dir.glob("*.html"):
+        if f.is_file() and is_older_than_3_days(f.name):
+            f.unlink()
