@@ -138,8 +138,6 @@ class EmailExtractionService:
     def remove_old_alert_email(self, days_back: int = 3):
         """Remove alert emails and fixtures older than days_back"""
 
-        keywords = ["python", "backend", "data", "engineer", "developer", "ai"]
-
         self.client.connect()
         self.client.select_folder(self.folder)
 
@@ -163,12 +161,11 @@ class EmailExtractionService:
             sender_l = sender.lower()
             subject_l = subject.lower()
 
-            is_linkedin = "alert@indeed.com" in sender_l
-            is_indeed = "jobalerts-noreply@linkedin.com" in sender_l
-            matches_kw = any(kw in subject_l for kw in keywords)
+            is_linkedin = "jobalerts-noreply@linkedin.com" in sender_l
+            is_indeed = "alert@indeed.com" in sender_l
 
             # Skip email that are not job alerts
-            if not (is_linkedin or is_indeed) and matches_kw:
+            if not (is_linkedin or is_indeed):
                 continue
 
             msg_date = self.parse_msg_date(msg)
