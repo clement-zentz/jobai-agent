@@ -3,6 +3,7 @@
 
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
+from dateutil import parser as dateutil_parser
 from typing import List, Optional
 
 from .imap_client import IMAPClient
@@ -127,13 +128,22 @@ class EmailExtractionService:
     def parse_msg_date(msg):
         # parse Date header to datetime for fixture naming
         header_date = msg.get("Date")
-        msg_dt: datetime | None = None
-        if header_date:
-            try:
-                msg_dt = parsedate_to_datetime(header_date)
-            except (TypeError, ValueError):
-                msg_dt = None
-        return msg_dt
+        if not header_date:
+            return None
+
+        # Try strict RFC parser first
+        try:
+            dt = parsedate_to_datetime(header_date)
+            if dt is not None:
+                return dt
+        except Exception:
+            pass
+
+        try:
+            dt = dateutil_parser.parse(header_date, fuzzy=True)
+            return dt
+        except Exception:
+            return None
 
     def remove_old_alert_email(self, days_back: int = 3):
         """Remove alert emails and fixtures older than days_back"""
