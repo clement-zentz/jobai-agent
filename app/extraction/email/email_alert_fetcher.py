@@ -151,25 +151,30 @@ class EmailExtractionService:
         self.client.connect()
         self.client.select_folder(self.folder)
 
-        # Search ALL emails
-        uids = self.client.search("All")
-
-        today = datetime.now(timezone.utc)
-        cutoff_date = today - timedelta(days=days_back)
-
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_back)
         remove_old_fixtures()
 
-        deleted_count = 0
-        for uid in uids:
-            msg = self.client.fetch_email(uid)
-            if not msg:
-                continue
+        uids_indeed = self.client.search('FROM', '"alert@indeed.com"')
+        uids_linkedin = self.client.search('FROM', '"jobalerts-noreply@linkedin.com"')
 
+        all_uids = list(set(uids_indeed + uids_linkedin))
+
+        if not all_uids:
+            logger.info("No job alerts found.")
+            return 0
+        
+        uid_set = ",".join(all_uids)
+
+        header_blocks = self.client.fetch_headers_bulk(uid_set)
+
+        deleted_count = 0
+        uids_to_delete = []
+
+        for uid, msg in header_blocks:
             sender = IMAPClient.decode(msg.get("From"))
             subject = IMAPClient.decode(msg.get("Subject"))
 
             sender_l = sender.lower()
-            subject_l = subject.lower()
 
             is_linkedin = "jobalerts-noreply@linkedin.com" in sender_l
             is_indeed = "alert@indeed.com" in sender_l
@@ -182,12 +187,20 @@ class EmailExtractionService:
             if not msg_date:
                 continue # cannot delete an email without a valid date
 
+            if msg_date.tzinfo is None:
+                msg_date.replace(tzinfo=timezone.utc)
+
             # Remove alert email older than 3 days
             # ex: 2025-11-20 < 2025-11-25
             if msg_date < cutoff_date:
-                self.client.delete_email(uid)
+                uids_to_delete.append(uid)
                 deleted_count += 1
-                logger.info(f"Deleted email: {subject} (UID: {uid}) date:{msg_date}")
+                logger.info(
+                    f"Deleted email: {sender} {subject}" 
+                    f"(UID: {uid}) date:{msg_date}")
+
+        # batch deletion
+        self.client.delete_emails_batch(uids_to_delete)
 
         if self.client.conn is not None:
             self.client.conn.logout()

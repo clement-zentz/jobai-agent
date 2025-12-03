@@ -7,6 +7,9 @@ from email.header import decode_header
 from email.message import Message
 from typing import List, Optional
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class IMAPClient:
     def __init__(self, host: str, username: str, password: str, port: int = 993):
@@ -51,12 +54,66 @@ class IMAPClient:
             return None
         return email.message_from_bytes(raw)
 
+    def fetch_headers_bulk(self, uid_set: str) -> list[tuple[str, Message]]:
+        """
+        Fetch headers (From/Subject/Date) for a specific UID set in one IMAP command.
+        Example uid_set: "100,105,110"
+        Returns list of (uid, Message)
+        """
+        if self.conn is None:
+            raise RuntimeError("IMAP connection not established")
+
+        # Fetch only From, Subject and Date (much faster)
+        status, data = self.conn.fetch(
+            uid_set,
+            "(UID BODY.PEEK[HEADER.FIELDS (FROM SUBJECT DATE)])"
+        )
+
+        if status != "OK" or not data:
+            return []
+
+        results = []
+
+        for item in data:
+            if not isinstance(item, tuple):
+                continue
+
+            meta = item[0].decode(errors="ignore")
+            body = item[1]
+
+            # Extract UID from metadata: e.g. '1234 (UID 5678 BODY[...])'
+            parts = meta.split()
+            uid = None
+            for i, part in enumerate(parts):
+                if part == "UID" and i + 1 < len(parts):
+                    uid = parts[i + 1]
+                    break
+
+            if not uid or not uid.isdigit():
+                continue
+
+            msg = email.message_from_bytes(body)
+            results.append((uid, msg))
+
+        return results
+       
     def delete_email(self, uid: str):
         if self.conn is None:
             raise RuntimeError("IMAP connection not established")
         # Mark email as deleted
         self.conn.store(uid, '+FLAGS', r'(\Deleted)')
         # Permanently remove emails marked as deleted
+        self.conn.expunge()
+
+    def delete_emails_batch(self, uids: list[str]):
+        if self.conn is None:
+            raise RuntimeError("IMAP connection not established")
+
+        if not uids:
+            return
+
+        uid_set = ",".join(uids)
+        self.conn.store(uid_set, "+FLAGS", r"(\Deleted)")
         self.conn.expunge()
 
     @staticmethod
