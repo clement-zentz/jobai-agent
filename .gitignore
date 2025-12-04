@@ -4,9 +4,10 @@
 
 ignore
 
-__pycache__
+__pycache__/
 *.pyc
 *.log
+logs
 
 # pytest
 .pytest_cache
@@ -20,4 +21,10 @@ __pycache__
 uv.lock
 .uv/
 
-.vscode
+# .vscode
+
+# sqlite3
+*.db
+
+# fixtures
+tests/email_fixtures
