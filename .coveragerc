@@ -1,0 +1,18 @@
+[run]
+branch = True
+source = app
+omit =
+    */tests/*
+    */.venv/*
+    app/main.py
+    app/lifespan.py
+    */__init__.py
+    app/scrapers/*.py
+    app/ingestion/web_ingestion.py
+
+[report]
+show_missing = True
+skip_covered = True
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
