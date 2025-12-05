@@ -1,7 +1,9 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # docker-compose.yml
 
 services:
   api:
+    user: "${UID}:${GID}"
     build: .
     ports:
       - "8000:8000"
@@ -21,7 +23,7 @@ services:
         - action: rebuild
           path: ./uv.lock
     volumes:
-      - ./app/tests/email_fixtures:/app/app/tests/email_fixtures
+      - ./tests/email_fixtures:/app/tests/email_fixtures
 
   postgres:
       image: postgres:16-alpine
