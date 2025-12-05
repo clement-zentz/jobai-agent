@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # app/utils/clean_fixture.py
 import re, secrets
 from bs4 import BeautifulSoup, Comment
@@ -52,7 +53,7 @@ def clean_raw_fixture(html: str) -> str:
         # --- 7. Pretty-print output
         return soup.prettify()
 
-def generate_tests_fixtures(
+def create_fixture(
     platform: str, 
     html: str, 
     msg_date: datetime | None = None,
@@ -74,6 +75,7 @@ def generate_tests_fixtures(
 
     # Raw email fixture
     raw_fixture_dir = Path(settings.raw_fixture_dir)
+    raw_fixture_dir = raw_fixture_dir / platform
     raw_fixture_dir.mkdir(parents=True, exist_ok=True)
 
     raw_file_path = raw_fixture_dir / f"{platform}_raw_{slug_sbj}_{ts}.html"
@@ -81,6 +83,7 @@ def generate_tests_fixtures(
     
     # Net email fixture
     net_fixture_dir = Path(settings.net_fixture_dir)
+    net_fixture_dir = net_fixture_dir / platform
     net_fixture_dir.mkdir(parents=True, exist_ok=True)
 
     cleaned_html = clean_raw_fixture(html)
@@ -88,32 +91,21 @@ def generate_tests_fixtures(
     net_file_path = net_fixture_dir / f"{platform}_net_{slug_sbj}_{ts}.html"
     net_file_path.write_text(cleaned_html, encoding="utf-8")
 
-def remove_old_fixtures():
+def remove_all_fixtures():
+    """Remove all fixture files from raw and net fixture directories."""
     raw_fixture_dir = Path(settings.raw_fixture_dir)
-    net_dixture_dir = Path(settings.net_fixture_dir)
+    net_fixture_dir = Path(settings.net_fixture_dir)
 
-    # Pattern: *_2025-11-30.html
-    pattern = r'_(\d{4}-\d{2}-\d{2})\.html$'
-    cutoff_date = datetime.now().date() - timedelta(days=3)
+    # Remove recursively all HTML files 
+    # from raw fixture dir and subdirs
+    if raw_fixture_dir.exists():
+        for f in raw_fixture_dir.glob("**/*.html"):
+            if f.is_file():
+                f.unlink()
 
-    # Function to check file age
-    def is_older_than_3_days(filename: str) -> bool:
-        match = re.search(pattern, filename)
-        if not match:
-            return False # ignore files without date
-        try:
-            file_date = datetime.strptime(
-                match.group(1), "%Y-%m-%d").date()
-            return file_date < cutoff_date
-        except ValueError:
-            return False
-    
-    # Remove from raw fixtures
-    for f in raw_fixture_dir.glob("*.html"):
-        if f.is_file() and is_older_than_3_days(f.name):
-            f.unlink()
-
-    # Remove from net fixtures
-    for f in net_dixture_dir.glob("*.html"):
-        if f.is_file() and is_older_than_3_days(f.name):
-            f.unlink()
+    # Remove recursively all HTML files 
+    # from net fixture dir and subdirs
+    if net_fixture_dir.exists():
+        for f in net_fixture_dir.glob("**/*.html"):
+            if f.is_file():
+                f.unlink()
