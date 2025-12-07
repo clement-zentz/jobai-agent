@@ -6,8 +6,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     database_url: str
     debug: bool = False
-    raw_fixture_dir: str
-    net_fixture_dir: str 
+    fixture_dir: str
 
     model_config = {
         "env_file": ".env",

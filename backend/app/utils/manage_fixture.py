@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # app/utils/clean_fixture.py
-import re, secrets
+import secrets, json, shutil
 from bs4 import BeautifulSoup, Comment
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from slugify import slugify
-from .truncate_string import shorten_text
 from app.core.config import get_settings
 
 
@@ -56,6 +54,7 @@ def clean_raw_fixture(html: str) -> str:
 def create_fixture(
     platform: str, 
     html: str, 
+    uid: int,
     msg_date: datetime | None = None,
     subject: str | None = None,
 ):
@@ -70,42 +69,37 @@ def create_fixture(
     subject = subject if subject else secrets.token_hex(4)
     msg_date = msg_date if msg_date else datetime.now(timezone.utc)
 
-    slug_sbj = slugify(shorten_text(subject))
-    ts = msg_date.astimezone(timezone.utc).strftime("%Y-%m-%d")
+    msg_date_s = msg_date.astimezone(timezone.utc).strftime("%Y-%m-%d")
 
     # Raw email fixture
-    raw_fixture_dir = Path(settings.raw_fixture_dir)
-    raw_fixture_dir = raw_fixture_dir / platform
-    raw_fixture_dir.mkdir(parents=True, exist_ok=True)
+    fixt_dir = Path(settings.fixture_dir) / platform / f"{msg_date_s}_{uid}"
+    fixt_dir.mkdir(parents=True, exist_ok=True)
 
-    raw_file_path = raw_fixture_dir / f"{platform}_raw_{slug_sbj}_{ts}.html"
-    raw_file_path.write_text(html, encoding="utf-8")
+    (fixt_dir / f"raw_{uid}.html").write_text(
+        html, encoding="utf-8")
+    (fixt_dir / f"clean_{uid}.html").write_text(
+        clean_raw_fixture(html), encoding="utf-8")
     
-    # Net email fixture
-    net_fixture_dir = Path(settings.net_fixture_dir)
-    net_fixture_dir = net_fixture_dir / platform
-    net_fixture_dir.mkdir(parents=True, exist_ok=True)
+    meta = {
+        "subject": subject,
+        "received_at": msg_date.isoformat(),
+        "platform": platform,
+        "uid": uid,
+    }
 
-    cleaned_html = clean_raw_fixture(html)
+    (fixt_dir / f"meta_{uid}.json").write_text(
+        json.dumps(meta, indent=2))
+  
 
-    net_file_path = net_fixture_dir / f"{platform}_net_{slug_sbj}_{ts}.html"
-    net_file_path.write_text(cleaned_html, encoding="utf-8")
 
 def remove_all_fixtures():
-    """Remove all fixture files from raw and net fixture directories."""
-    raw_fixture_dir = Path(settings.raw_fixture_dir)
-    net_fixture_dir = Path(settings.net_fixture_dir)
+    """Remove all fixture files from fixture directory."""
+    fixt_dir = Path(settings.fixture_dir)
 
-    # Remove recursively all HTML files 
-    # from raw fixture dir and subdirs
-    if raw_fixture_dir.exists():
-        for f in raw_fixture_dir.glob("**/*.html"):
-            if f.is_file():
-                f.unlink()
-
-    # Remove recursively all HTML files 
-    # from net fixture dir and subdirs
-    if net_fixture_dir.exists():
-        for f in net_fixture_dir.glob("**/*.html"):
-            if f.is_file():
-                f.unlink()
+    # Remove recursively all files 
+    # in fixture dir and subdirs
+    for item in fixt_dir.iterdir():
+        if item.is_file():
+            item.unlink()
+        elif item.is_dir():
+            shutil.rmtree(item)

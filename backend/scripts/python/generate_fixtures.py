@@ -143,6 +143,7 @@ def generate_recent_fixtures(days_back: int=7, max_per_platform: int=3, folder: 
                 html=html,
                 msg_date=msg_dt,
                 subject=subject,
+                uid=uid,
             )
 
     if client.conn is not None:
