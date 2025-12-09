@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # app/utils/clean_fixture.py
-import secrets, json, shutil
+import secrets, json, shutil, re
 from bs4 import BeautifulSoup, Comment
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -48,8 +48,30 @@ def clean_raw_fixture(html: str) -> str:
         for script in soup.find_all("script"):
             script.decompose()
 
-        # --- 7. Pretty-print output
+        # --- 7. Remove url trackers and tokens,
+        # replace unnecessary urls too
+        for a in soup.find_all("a", href=True):
+            a["href"] = clean_job_url(str(a["href"]))
+
+        # --- 8. Pretty-print output
         return soup.prettify()
+
+def clean_job_url(url: str) -> str:
+    # --- Indeed ---
+    if "indeed.com" in url:
+        match = re.search(r"jk=([\w]+)", url)
+        if match:
+            return f"https://indeed.com/viewjob?jk={match.group(1)}"
+        return "https://indeed.com"
+    
+    # --- LinkedIn ---
+    if "linkedin.com" in url:
+        match = re.search(r"/jobs/view/(\d+)", url)
+        if match:
+            return f"https://www.linkedin.com/jobs/view/{match.group(1)}"
+        return "https://www.linkedin.com"
+    
+    return url
 
 def create_fixture(
     platform: str, 
