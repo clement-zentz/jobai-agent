@@ -2,7 +2,9 @@
 # app/utils/clean_fixture.py
 import secrets, json, shutil, re
 from bs4 import BeautifulSoup, Comment
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
+from dateutil import parser as dateutil_parser
 from pathlib import Path
 from app.core.config import get_settings
 
@@ -10,68 +12,68 @@ from app.core.config import get_settings
 settings = get_settings()
 
 def clean_raw_fixture(html: str) -> str:
-        """
-        Clean extracted html from emails into a human readable file.
-        """
-        soup = BeautifulSoup(html, "html.parser")
+    """
+    Clean extracted html from emails into a human readable file.
+    """
+    soup = BeautifulSoup(html, "html.parser")
 
-        # # --- 1. Remove all <style> blocks (media queries + hacks) 
-        for style in soup.find_all("style"):
-            style.decompose()
+    # # --- 1. Remove all <style> blocks (media queries + hacks)
+    for style in soup.find_all("style"):
+        style.decompose()
 
-        # --- 2. Remove Outlook conditionnal comments and all comments
-        for element in soup(text=lambda t: isinstance(t, Comment)):
-            # Remove comments like <!--[if mso]> ... <![endif]-->
-            if "if" in element or "mso" in element or "endif" in element:
-                element.extract()
-            else:
-                element.extract()
-        
-        # --- 3. Remove preview text (hidden divs)
-        for div in soup.find_all("div"):
-            style = str(div.get("style", "")) or ""
-            if "display:none" in style or "max-height:0" in style:
-                div.decompose()
-            
-        # --- 4. Remove tracking pixels
+    # --- 2. Remove Outlook conditionnal comments and all comments
+    for element in soup(text=lambda t: isinstance(t, Comment)):
+        # Remove comments like <!--[if mso]> ... <![endif]-->
+        if "if" in element or "mso" in element or "endif" in element:
+            element.extract()
+        else:
+            element.extract()
+
+    # --- 3. Remove preview text (hidden divs)
+    for div in soup.find_all("div"):
+        style = str(div.get("style", "")) or ""
+        if "display:none" in style or "max-height:0" in style:
+            div.decompose()
+
+    # --- 4. Remove tracking pixels
+    for img in soup.find_all("img"):
+        w = img.get("width", "")
+        h = img.get("height", "")
+        if w in ("1", "0", "1px") or h in ("1", "0", "1px"):
+            img.decompose()
+
+    # --- 5. Remove meta tags (useless for readability)
+    for meta in soup.find_all("meta"):
+        meta.decompose()
+
+    # --- 6. Remove <script> tags (rare in emails)
+    for script in soup.find_all("script"):
+        script.decompose()
+
+    # --- 7. Remove url trackers and tokens,
+    # replace unnecessary urls too
+    for a in soup.find_all("a", href=True):
+        a["href"] = clean_job_url(str(a["href"]))
+
+    # --- 8. Replace first name and last name with [REDACTED]
+    name_pattern = build_name_pattern()
+    if name_pattern:
+        # Remove from text nodes
+        for text in soup.find_all(string=name_pattern):
+            text.replace_with(name_pattern.sub("[REDACTED]", text))
+
+        # Remove from alt attributes
         for img in soup.find_all("img"):
-            w = img.get("width", "")
-            h = img.get("height", "")
-            if w in ("1", "0", "1px") or h in ("1", "0", "1px"):
-                img.decompose()
+            if img.get("alt"):
+                img["alt"] = name_pattern.sub("[REDACTED]", str(img["alt"]))
 
-        # --- 5. Remove meta tags (useless for readability)
-        for meta in soup.find_all("meta"):
-            meta.decompose()
-
-        # --- 6. Remove <script> tags (rare in emails)
-        for script in soup.find_all("script"):
-            script.decompose()
-
-        # --- 7. Remove url trackers and tokens,
-        # replace unnecessary urls too
+        # Remove from URLs
         for a in soup.find_all("a", href=True):
-            a["href"] = clean_job_url(str(a["href"]))
+            cleaned = name_pattern.sub("[REDACTED]", str(a["href"]))
+            a["href"] = cleaned
 
-        # --- 8. Replace first name and last name with [REDACTED]
-        name_pattern = build_name_pattern()
-        if name_pattern:
-            # Remove from text nodes
-            for text in soup.find_all(string=name_pattern):
-                text.replace_with(name_pattern.sub("[REDACTED]", text))
-
-            # Remove from alt attributes
-            for img in soup.find_all("img"):
-                if img.get("alt"):
-                    img["alt"] = name_pattern.sub("[REDACTED]", str(img["alt"]))
-            
-            # Remove from URLs
-            for a in soup.find_all("a", href=True):
-                cleaned = name_pattern.sub("[REDACTED]", str(a["href"]))
-                a["href"] = cleaned
-
-        # --- 9. Pretty-print output
-        return soup.prettify()
+    # --- 9. Pretty-print output
+    return soup.prettify()
 
 def clean_job_url(url: str) -> str:
     # --- Indeed ---
@@ -80,14 +82,14 @@ def clean_job_url(url: str) -> str:
         if match:
             return f"https://indeed.com/viewjob?jk={match.group(1)}"
         return "https://indeed.com"
-    
+
     # --- LinkedIn ---
     if "linkedin.com" in url:
         match = re.search(r"/jobs/view/(\d+)", url)
         if match:
             return f"https://www.linkedin.com/jobs/view/{match.group(1)}"
         return "https://www.linkedin.com"
-    
+
     return url
 
 def build_name_pattern():
@@ -101,10 +103,31 @@ def build_name_pattern():
 
     if not parts:
         return None
-    
+
     # Matches: Foo Bar, any case
     pattern = r"\b(" + "|".join(parts) + r")\b"
     return re.compile(pattern, flags=re.IGNORECASE)
+
+@staticmethod
+def parse_msg_date(msg):
+    # parse Date header to datetime for fixture naming
+    header_date = msg.get("Date")
+    if not header_date:
+        return None
+
+    # Try strict RFC parser first
+    try:
+        dt = parsedate_to_datetime(header_date)
+        if dt is not None:
+            return dt
+    except Exception:
+        pass
+
+    try:
+        dt = dateutil_parser.parse(header_date, fuzzy=True)
+        return dt
+    except Exception:
+        return None
 
 def create_fixture(
     platform: str, 
@@ -151,7 +174,7 @@ def remove_all_fixtures():
     """Remove all fixture files from fixture directory."""
     fixt_dir = Path(settings.fixture_dir)
 
-    # Remove recursively all files 
+    # Remove recursively all files
     # in fixture dir and subdirs
     for item in fixt_dir.iterdir():
         if item.is_file():
