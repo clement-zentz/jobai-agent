@@ -7,6 +7,8 @@ from app.extraction.email.imap_client import IMAPClient
 from app.extraction.email.provider import detect_provider
 from app.utils.fixture_tools.writer import create_fixture, remove_all_fixtures
 from app.utils.fixture_tools.naming import parse_msg_date
+from app.extraction.email.parsers.indeed import IndeedParser
+from app.extraction.email.parsers.linkedin import LinkedInParser
 
 import logging
 
@@ -61,6 +63,11 @@ def fetch_recent_email_uids(client: IMAPClient, sender_address: str, days_back: 
     # Sort by descending date (most recent first)
     results.sort(key=lambda tup: tup[2], reverse=True)
     return results
+
+PARSERS = {
+    "indeed": IndeedParser(),
+    "linkedin": LinkedInParser(),
+}
 
 def generate_recent_fixtures(days_back: int=7, max_per_platform: int=3, folder: str="INBOX"):
     """
@@ -131,6 +138,9 @@ def generate_recent_fixtures(days_back: int=7, max_per_platform: int=3, folder: 
             subject = IMAPClient.decode(msg.get("Subject"))
             html = IMAPClient.extract_html(msg)
             headers = IMAPClient.extract_headers(msg)
+            
+            parser = PARSERS.get(platform)
+            jobs = parser.parse(html) if parser else []
 
             if not html:
                 logger.warning(f"Skipping UID {uid} (no HTML)")
@@ -144,6 +154,7 @@ def generate_recent_fixtures(days_back: int=7, max_per_platform: int=3, folder: 
                 msg_date=msg_dt,
                 uid=uid,
                 headers=headers,
+                jobs=jobs,
             )
 
     if client.conn is not None:

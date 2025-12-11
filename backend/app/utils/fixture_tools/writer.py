@@ -3,7 +3,7 @@
 import json
 import shutil
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 
 from app.core.config import get_settings
 from .html_cleaner import clean_raw_fixture
@@ -17,6 +17,7 @@ def create_fixture(
     platform: str, 
     html: str, 
     headers: dict,
+    jobs: list[dict],
     uid: int,
     msg_date: datetime | None = None,
 ):
@@ -43,10 +44,32 @@ def create_fixture(
     (fixt_dir / f"clean_{uid}.html").write_text(
         clean_raw_fixture(html, name_re, email_re), encoding="utf-8")
 
-    (fixt_dir / f"raw_metadata_{uid}.json").write_text(
+    (fixt_dir / f"raw_headers_{uid}.json").write_text(
         json.dumps(headers, indent=2))
     (fixt_dir / f"net_headers_{uid}.json").write_text(
         json.dumps(clean_headers(headers), indent=2))
+    
+    def _json_safe(obj):
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        if isinstance(obj, Path):
+            return str(obj)
+        return obj
+
+    if jobs is not None:
+        (fixt_dir / f"response_{uid}.json").write_text(
+            json.dumps(
+                {
+                    "platform": platform,
+                    "count": len(jobs),
+                    "jobs": jobs,
+                },
+                indent=2,
+                ensure_ascii=False,
+                default=_json_safe,
+            ),
+            encoding="utf-8",
+        )
 
 def remove_all_fixtures():
     """Remove all fixture files from fixture directory."""
