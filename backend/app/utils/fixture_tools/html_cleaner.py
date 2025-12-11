@@ -84,5 +84,9 @@ def clean_raw_fixture(html: str, name_re=None, email_re=None) -> str:
             cleaned = name_re.sub("[REDACTED]", str(a["href"]))
             a["href"] = cleaned
 
+    if email_re:
+        for text in soup.find_all(string=email_re):
+            text.replace_with(email_re.sub("[REDACTED]", text))
+
     # --- 9. Pretty-print output
     return soup.prettify()
