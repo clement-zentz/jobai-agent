@@ -30,5 +30,12 @@ bash:
 fixture:
 	$(dc) exec api python3 -m scripts.python.generate_fixtures
 
+fixture-debug:
+	$(dc) exec api \
+	python3 -Xfrozen_modules=off -m debugpy \
+	--listen 0.0.0.0:5679 \
+	--wait-for-client \
+	-m scripts.python.generate_fixtures
+
 cov:
 	pytest --cov=app --cov-report=term-missing

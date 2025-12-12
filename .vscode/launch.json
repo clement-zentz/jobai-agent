@@ -17,5 +17,22 @@
         ],
         "justMyCode": false
     },
+
+    // one python process = one debugger
+    {
+        "name": "Attach to Script (Docker)",
+        "type": "debugpy",
+        "request": "attach",
+        "connect": {
+            "host": "localhost",
+            "port": 5679
+        },
+        "pathMappings": [
+            {
+            "localRoot": "${workspaceFolder}/backend",
+            "remoteRoot": "/app"
+            }
+        ]
+    }
   ]
 }
