@@ -6,8 +6,8 @@ from app.core.config import get_settings
 settings = get_settings()
 
 
-def build_name_pattern():
-    parts = []
+def build_name_pattern() -> re.Pattern[str] | None:
+    parts: list[str] = []
 
     if settings.user_first_name:
         parts.append(re.escape(settings.user_first_name.strip()))
@@ -18,30 +18,40 @@ def build_name_pattern():
     if not parts:
         return None
 
-    # Matches: Foo Bar, any case
-    pattern = r"\b(" + "|".join(parts) + r")\b"
+    # Matches first and/or last name, case insentitive
+    pattern = rf"\b({'|'.join(parts)})\b"
     return re.compile(pattern, flags=re.IGNORECASE)
 
-def build_email_pattern():
+def build_email_pattern() -> re.Pattern[str] | None:
     if not settings.user_email:
         return None
     
-    email = re.escape(settings.user_email)
+    raw_email = settings.user_email.strip()
+    escaped_email = re.escape(raw_email)
+    encoded_email = re.escape(raw_email.replace("@", "%40"))
 
     # Matches:
     # - youremail@example.com
     # - <youremail@example.com>
-    # - URL encoded: youremail%40example.com
-    pattern = (
-        r"(" + email + r"|<" + email + r">" + r"|" + 
-        email.replace("@", r"%40") + r")")
+    # - youremail%40example.com
+    pattern = rf"""
+        (?:
+            <{escaped_email}> |
+            {escaped_email} |
+            {encoded_email}
+        )
+    """
 
-    return re.compile(pattern, flags=re.IGNORECASE)
+    return re.compile(pattern, flags=re.IGNORECASE | re.VERBOSE)
 
-def clean_headers(raw: dict[str, str]) -> dict[str, str]:
+def clean_headers(
+        raw: dict[str, str],
+        name_re: re.Pattern[str] | None,
+        email_re: re.Pattern[str] | None,
+) -> dict[str, str]:
     """
     Clean email metadata extracted from IMAP.
-    Keeps only safe and relevant fiels while removing:
+    Keeps only safe and relevant fields while removing:
     - personal data (emails, names)
     - server routing headers (Received, ARC, SPF, DKIM...)
     - tracking IDs
@@ -49,7 +59,7 @@ def clean_headers(raw: dict[str, str]) -> dict[str, str]:
     """
 
     # 1. Whitelist of useful & safe headers
-    allowed_keys = {
+    ALLOWED_KEYS = {
         "from",
         "subject",
         "date",
@@ -68,33 +78,27 @@ def clean_headers(raw: dict[str, str]) -> dict[str, str]:
         "x-linkedin-template",
     }
 
-    cleaned = {}
+    cleaned: dict[str, str] = {}
 
     for key, value in raw.items():
         k = key.lower().strip()
 
         # Skip anything not in the whitelist
-        if k not in allowed_keys:
+        if k not in ALLOWED_KEYS:
             continue
 
-        if value:
-            # 2.  Remove personal data if it appears inside values
-            name_re = build_name_pattern()
-            email_re = build_email_pattern()
+        v = value or ""
 
-            # Remove first name and last name
-            if name_re:
-                v = name_re.sub("", value)
-            # Remove email
-            if email_re:
-                v = email_re.sub("", value)
-        else:
-            v = value
+        # Remove personal data
+        if name_re:
+            v = name_re.sub("", v)
+        if email_re:
+            v = email_re.sub("", v)
          
         # 3. Normalize content-type (remove boundaries)
         if k == "content-type":
             # Example: multipart/alternative; boundary="XYZ"
-            v = v.split(";")[0].strip()
+            v = v.split(";", 1)[0].strip()
         
         cleaned[k] = v
 

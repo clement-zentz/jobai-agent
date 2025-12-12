@@ -24,7 +24,11 @@ def clean_job_url(url: str) -> str:
 
     return url
 
-def clean_raw_fixture(html: str, name_re=None, email_re=None) -> str:
+def clean_raw_fixture(
+        html: str,
+        name_re: re.Pattern[str] | None = None,
+        email_re: re.Pattern[str] | None = None,
+) -> str:
     """
     Clean extracted html from emails into a human readable file.
     """

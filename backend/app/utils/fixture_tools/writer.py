@@ -47,7 +47,7 @@ def create_fixture(
     (fixt_dir / f"raw_headers_{uid}.json").write_text(
         json.dumps(headers, indent=2))
     (fixt_dir / f"net_headers_{uid}.json").write_text(
-        json.dumps(clean_headers(headers), indent=2))
+        json.dumps(clean_headers(headers, name_re, email_re), indent=2))
     
     def _json_safe(obj):
         if isinstance(obj, (datetime, date)):
