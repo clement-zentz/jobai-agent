@@ -1,23 +1,22 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# app/extraction/email_alert_parser.py
+# backend/app/extraction/email/email_alert_fetcher.py
 
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
-from typing import List, Optional
-
+from dataclasses import dataclass
 from .imap_client import IMAPClient
-from .parser_base import EmailParser
-from .parsers.indeed import IndeedParser
-from .parsers.linkedin import LinkedInParser
 from .provider import detect_provider
 
+@dataclass
+class FetchedEmail:
+    uid: str
+    sender: str
+    subject: str
+    msg_dt: datetime
+    html: str
+    headers: dict[str, str]
 
-import logging
-
-logger = logging.getLogger(__name__)
-
-class EmailExtractionService:
-    """Fetch job alerts from an IMAP inbox and parse them into job dicts."""
+class EmailAlertFetcher:
 
     def __init__(self, email_address: str, password: str, folder: str = "INBOX"):
         provider = detect_provider(email_address)
@@ -29,32 +28,18 @@ class EmailExtractionService:
         )
 
         self.folder = folder
-        self.parsers: List[EmailParser] = [
-            LinkedInParser(),
-            IndeedParser(),
-            # WWTTJParser(),
-        ]
 
-    def fetch_recent_jobs(self, days_back: int = 1) -> list[dict]:
-        """Return parsed jobs from emails received within the last `days_back` days."""
+    def fetch_recent(self, days_back: int) -> list[FetchedEmail]:
         self.client.connect()
         self.client.select_folder(self.folder)
 
         since_str = self._since_query(days_back)
         uids = self.client.search("SINCE", since_str)
 
-        jobs: list[dict] = []
+        emails: list[FetchedEmail] = []
         for uid in uids:
             msg = self.client.fetch_email(uid)
             if not msg:
-                continue
-
-            sender = IMAPClient.decode(msg.get("From"))
-            subject = IMAPClient.decode(msg.get("Subject"))
-
-            parser = self._match_parser(sender, subject)
-
-            if not parser:
                 continue
 
             if not self._is_recent_enough(msg, days_back):
@@ -64,30 +49,29 @@ class EmailExtractionService:
             if not html:
                 continue
 
-            platform = parser.__class__.__name__.replace(
-                "Parser", "").lower()
+            headers = IMAPClient.extract_headers(msg)
+            if not headers:
+                continue
 
-            msg_dt = parsedate_to_datetime(msg.get("Date"))
-            parsed = parser.parse(html, msg_dt)
+            sender = IMAPClient.decode(msg["from"])
+            subject = IMAPClient.decode(msg["subject"])
+            msg_dt = parsedate_to_datetime(msg["date"])
 
-            for job in parsed:
-                job.setdefault("platform", platform)
-                job["source_uid"] = uid
-                job["source_subject"] = subject
-                job["source_sender"] = sender
-            jobs.extend(parsed)
+            email = FetchedEmail(
+                uid=uid,
+                sender=sender,
+                subject=subject,
+                msg_dt=msg_dt,
+                html=html,
+                headers=headers,
+            )
+
+            emails.append(email)
 
         if self.client.conn is not None:
             self.client.conn.logout()
 
-        return jobs
-
-    def _match_parser(
-            self, sender: str, subject: str) -> Optional[EmailParser]:
-        for parser in self.parsers:
-            if parser.matches(sender, subject):
-                return parser
-        return None
+        return emails
 
     @staticmethod
     def _since_query(days_back: int) -> str:

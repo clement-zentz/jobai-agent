@@ -7,9 +7,8 @@ import logging
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
-from app.extraction.email.email_alert_fetcher import (
-    EmailExtractionService,
-)
+from app.extraction.email.job_extraction_service import JobExtractionService
+from app.extraction.email.email_alert_fetcher import EmailAlertFetcher
 from app.models.job_offer import JobOffer
 
 logger = logging.getLogger(__name__)
@@ -28,8 +27,11 @@ class JobIngestionService:
         days_back: int = 1,
     ) -> list[JobOffer]:
         """Fetch job alerts from email and save them to database."""
-        extractor = EmailExtractionService(email_address, password, folder)
-        raw_jobs = extractor.fetch_recent_jobs(days_back)
+        email_fetcher = EmailAlertFetcher(email_address, password, folder)
+        emails = email_fetcher.fetch_recent(days_back)
+
+        job_extractor = JobExtractionService()
+        raw_jobs = job_extractor.extract_jobs(emails)
 
         new_jobs: list[JobOffer] = []
 

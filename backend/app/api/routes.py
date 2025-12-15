@@ -10,7 +10,6 @@ from app.core.database import get_session
 
 # email data processing
 from app.ingestion.email_ingestion import JobIngestionService
-from app.extraction.email.email_alert_fetcher import EmailExtractionService
 from app.ingestion.web_ingestion import ingest_scraped_jobs
 from app.scrapers.indeed import IndeedScraper
 
