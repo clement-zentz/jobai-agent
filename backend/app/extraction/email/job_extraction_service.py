@@ -12,8 +12,15 @@ logger = logging.getLogger(__name__)
 
 
 class JobExtractionService:
-    """Fetch job alerts from an IMAP inbox and parse them into job dicts."""
+    """
+    Service for extracting job postings from email alerts.
+    
+    This service processes fetched emails by matching them with appropriate parsers
+    based on sender and subject, then extracts job information from the email content.
+    """
+    
     def __init__(self) -> None:
+        """Initialize the service with registered email parsers."""
         self.parsers: List[EmailParser] = [
             LinkedInParser(),
             IndeedParser(),
@@ -21,8 +28,15 @@ class JobExtractionService:
         ]
 
     def extract_jobs(self, emails: list[FetchedEmail]) -> list[dict]:
-        """Return parsed jobs from emails received within the last `days_back` days."""
-
+        """
+        Parse job postings from a list of fetched emails.
+        
+        Args:
+            emails: List of FetchedEmail objects to process
+            
+        Returns:
+            List of job dictionaries, each containing job details and source metadata
+        """
         jobs: list[dict] = []
         for email in emails:
 
@@ -48,7 +62,18 @@ class JobExtractionService:
         return jobs
 
     def _match_parser(
-            self, sender: str, subject: str) -> Optional[EmailParser]:
+            self, sender: str, subject: str
+    ) -> Optional[EmailParser]:
+        """
+        Find the appropriate parser for an email based on sender and subject.
+        
+        Args:
+            sender: Email sender address
+            subject: Email subject line
+            
+        Returns:
+            Matching EmailParser instance or None if no parser matches
+        """
         for parser in self.parsers:
             if parser.matches(sender, subject):
                 return parser
