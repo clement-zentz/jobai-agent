@@ -20,7 +20,7 @@ class FetchedEmail:
         html: HTML content of the email body
         headers: Dictionary of email headers
     """
-    uid: str
+    uid: int
     sender: str
     subject: str
     msg_dt: datetime
@@ -34,11 +34,11 @@ class EmailAlertFetcher:
     Connects to an IMAP server, retrieves emails from a specified folder,
     and extracts relevant information including HTML content and headers.
     """
-    
+
     def __init__(self, email_address: str, password: str, folder: str = "INBOX"):
         """
         Initialize the email fetcher with IMAP credentials.
-        
+
         Args:
             email_address: Email address for authentication
             password: Email account password or app-specific password
@@ -54,7 +54,7 @@ class EmailAlertFetcher:
 
         self.folder = folder
 
-    def fetch_recent(self, days_back: int) -> list[FetchedEmail]:
+    def fetch_recent(self, days_back: int = 1) -> list[FetchedEmail]:
         """
         Fetch emails from the last N days.
         
@@ -71,8 +71,8 @@ class EmailAlertFetcher:
         uids = self.client.search("SINCE", since_str)
 
         emails: list[FetchedEmail] = []
-        for uid in uids:
-            msg = self.client.fetch_email(uid)
+        for uid_str in uids:
+            msg = self.client.fetch_email(uid_str)
             if not msg:
                 continue
 
@@ -90,6 +90,7 @@ class EmailAlertFetcher:
             sender = IMAPClient.decode(msg["from"])
             subject = IMAPClient.decode(msg["subject"])
             msg_dt = parsedate_to_datetime(msg["date"])
+            uid = int(uid_str)
 
             email = FetchedEmail(
                 uid=uid,
@@ -146,3 +147,4 @@ class EmailAlertFetcher:
 
         cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
         return msg_dt >= cutoff
+    
