@@ -1,14 +1,15 @@
 # backend/app/normalization/html/pii.py
 
 import re
+from bs4 import BeautifulSoup
 
 def redact_pii(
-    soup,
+    soup: BeautifulSoup,
     name_re: re.Pattern[str] | None,
     email_re: re.Pattern[str] | None,
 ) -> None:
     """Mutate soup in place"""
-    # --- 8. Replace first name and last name with [REDACTED]
+    # --- Replace first name and last name with [REDACTED] ---
     if name_re:
         # Remove from text nodes
         for text in soup.find_all(string=name_re):
@@ -25,9 +26,10 @@ def redact_pii(
 
         # Remove from URLs
         for a in soup.find_all("a", href=True):
-            cleaned = name_re.sub("[REDACTED]", str(a["href"]))
-            a["href"] = cleaned
+            sanitized_link = name_re.sub("[REDACTED]", str(a["href"]))
+            a["href"] = sanitized_link
 
+    # --- Replace user email with [REDACTED] ---
     if email_re:
         for text in soup.find_all(string=email_re):
             text.replace_with(email_re.sub("[REDACTED]", text))
