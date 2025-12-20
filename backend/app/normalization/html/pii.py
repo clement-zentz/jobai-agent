@@ -31,3 +31,15 @@ def redact_pii(
     if email_re:
         for text in soup.find_all(string=email_re):
             text.replace_with(email_re.sub("[REDACTED]", text))
+
+    JOB_URL_MARKERS = (
+        "/rc/clk/",
+        "/pagead/clk/",
+        "/jobs/view/",
+    )
+
+    # --- Redact all non job urls ---
+    for a in soup.find_all("a", href=True):
+        href = a["href"]
+        if not any(marker in href for marker in JOB_URL_MARKERS):
+            a["href"] = "[REDACTED]"
