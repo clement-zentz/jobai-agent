@@ -2,7 +2,8 @@
 # backend/app/normalization/raw_url.py
 
 import re
-
+from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
+from app.normalization.url.policy import get_job_url_policy
 
 def normalize_job_url(raw_url: str) -> tuple[str, str] | None:
     """
@@ -39,3 +40,21 @@ def normalize_job_url(raw_url: str) -> tuple[str, str] | None:
             return job_key, canonical_url
 
     return None
+
+def sanitize_job_url(raw_url: str) -> str:
+
+    redact_keys = get_job_url_policy(raw_url)
+    if not redact_keys:
+        return raw_url
+
+    parsed = urlparse(raw_url)
+    query_params = parse_qsl(parsed.query, keep_blank_values=True)
+
+    redacted_params = [
+        (key, "REDACTED") if key in redact_keys else (key, value)
+        for key, value in query_params
+    ]
+
+    redacted_query = urlencode(redacted_params, doseq=True)
+
+    return urlunparse(parsed._replace(query=redacted_query))

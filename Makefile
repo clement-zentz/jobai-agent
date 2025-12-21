@@ -30,6 +30,9 @@ bash:
 fixture:
 	$(dc) exec api python3 -m scripts.python.generate_fixtures
 
+sample:
+	$(dc) exec api python3 -m scripts.python.generate_samples
+
 fixture-debug:
 	$(dc) exec api \
 	python3 -Xfrozen_modules=off -m debugpy \

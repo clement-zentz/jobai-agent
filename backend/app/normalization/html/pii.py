@@ -2,6 +2,7 @@
 
 import re
 from bs4 import BeautifulSoup
+from app.normalization.url.sanitize import sanitize_job_url
 
 def redact_pii(
     soup: BeautifulSoup,
@@ -40,8 +41,13 @@ def redact_pii(
         "/jobs/view/",
     )
 
-    # --- Redact all non job urls ---
+    # --- Redact all urls ---
     for a in soup.find_all("a", href=True):
         href = a["href"]
-        if not any(marker in href for marker in JOB_URL_MARKERS):
-            a["href"] = "[REDACTED]"
+
+        sanitized = sanitize_job_url(str(href))
+
+        if any(marker in href for marker in JOB_URL_MARKERS):
+            a["href"] = sanitized
+        else:
+            a["href"] = "[REDACTED]" 

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from bs4 import BeautifulSoup
 from app.extraction.email.parser_base import EmailParser
-from app.normalization.url import normalize_job_url
+from app.normalization.url.sanitize import normalize_job_url
 
 
 logger = logging.getLogger(__name__)

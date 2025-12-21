@@ -12,6 +12,7 @@ from app.normalization.html.pii import redact_pii
 from app.normalization.headers.pii import redact_headers
 from app.normalization.headers.whitelist import whitelist_headers
 from app.normalization.pii.patterns import build_name_pattern, build_email_pattern
+from app.normalization.url.sanitize import sanitize_job_url
 from app.fixtures.naming import format_fixture_date
 
 settings = get_settings()
@@ -98,6 +99,15 @@ def create_sample(
             serialize_jobs(jobs, platform),
             encoding="utf-8",
         )
+
+    # --- Jobs sanitized ---
+    for job in jobs:
+        job["raw_url"] = sanitize_job_url(job["raw_url"])
+    jobs_sanitized_path = sample_dir / "jobs_sanitized.json"
+    jobs_sanitized_path.write_text(
+        serialize_jobs(jobs, platform),
+        encoding="utf-8",
+    )
 
 def remove_all_samples():
     """Remove all sample files from sample directory."""
