@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from app.api import jobs, routes
 from app.lifespan import lifespan
+import app.models # noqa
 
 app = FastAPI(title="JobAI Agent", lifespan=lifespan)
 

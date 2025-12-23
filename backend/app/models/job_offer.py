@@ -2,15 +2,10 @@
 # app/models/job_offer.py
 
 from datetime import datetime, timezone
-from typing import Optional
 
 from sqlalchemy import String, Boolean, DateTime, Float
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-
-
-# Base for all SQLAlchemy models
-class Base(DeclarativeBase):
-    pass
+from sqlalchemy.orm import Mapped, mapped_column
+from app.db.base import Base
 
 
 class JobOffer(Base):

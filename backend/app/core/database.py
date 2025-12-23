@@ -2,14 +2,13 @@
 # app/core/database.py
 
 from sqlalchemy import text
-
 from sqlalchemy.ext.asyncio import (
     create_async_engine, 
     AsyncSession,
     async_sessionmaker
 )
 
-from app.models.job_offer import Base
+from app.db.base import Base
 from .config import get_settings
 
 
