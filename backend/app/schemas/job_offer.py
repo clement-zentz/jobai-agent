@@ -47,3 +47,12 @@ class JobOfferRead(JobOfferBase):
     date_scraped: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class JobOfferSummary(BaseModel):
+    id: int
+    title: str
+    company: str
+    location: str
+    platform: str
+
+    model_config = ConfigDict(from_attributes=True)

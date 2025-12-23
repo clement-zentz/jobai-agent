@@ -4,7 +4,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import String, Boolean, DateTime, Float
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 
@@ -12,6 +12,12 @@ class JobOffer(Base):
     __tablename__ = "joboffer"
 
     id: Mapped[int | None] = mapped_column(primary_key=True, autoincrement=True)
+
+    applications = relationship(
+        "JobApplication",
+        back_populates="job_offer",
+        cascade="all, delete-orphan",
+    )
 
     title: Mapped[str] = mapped_column(String, nullable=False)
     company: Mapped[str] = mapped_column(String, nullable=False)
