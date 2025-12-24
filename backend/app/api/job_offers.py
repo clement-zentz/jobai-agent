@@ -11,7 +11,7 @@ from app.models.job_offer import JobOffer
 from app.schemas.job_offer import (
     JobOfferCreate, JobOfferRead, JobOfferUpdate)
 
-router = APIRouter(prefix="/jobs", tags=["jobs"])
+router = APIRouter(prefix="/job-offers", tags=["Job Offers"])
 
 
 # 🟢 CREATE
