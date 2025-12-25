@@ -17,7 +17,7 @@ async def test_create_job(async_client):
         "title": "Python Developer", 
         "company": "OpenAI", 
         "location": "London",
-        "url": "https://example.com/job/python-dev",
+        "raw_url": "https://example.com/job/python-dev",
         "platform": "test"
     }
     response = await async_client.post("/job-offers/", json=payload)
@@ -38,14 +38,14 @@ async def test_list_jobs(async_client):
             "title": "SRE", 
             "company": "OpsLtd", 
             "location": "London",
-            "url": "https://example.com/job/python-dev1",
+            "raw_url": "https://example.com/job/python-dev1",
             "platform": "test"
         },
         {
             "title": "Data Engineer",
             "company": "Pipeline Inc.",
             "location": "London",
-            "url": "https://example.com/job/python-dev2",
+            "raw_url": "https://example.com/job/python-dev2",
             "platform": "test"
         }
     ]
@@ -69,7 +69,7 @@ async def test_get_job(async_client):
         "title": "Backend developer", 
         "company": "Nvidia", 
         "location": "London",
-        "url": "https://example.com/job/python-dev",
+        "raw_url": "https://example.com/job/python-dev",
         "platform": "test"
     }
     create_resp = await async_client.post("/job-offers/", json=payload)
@@ -91,7 +91,7 @@ async def test_update_job(async_client):
         "title": "Data analyst", 
         "company": "DataCorp", 
         "location": "Paris",
-        "url": "https://example.com/job/python-dev",
+        "raw_url": "https://example.com/job/python-dev",
         "platform": "test"
     }
     create_resp = await async_client.post("/job-offers/", json=payload)
@@ -115,7 +115,7 @@ async def test_delete_job(async_client):
         "title": "Frontend Dev", 
         "company": "WebCo", 
         "location": "Dublin",
-        "url": "https://example.com/job/python-dev",
+        "raw_url": "https://example.com/job/python-dev",
         "platform": "test"
     }
     create_resp = await async_client.post("/job-offers/", json=payload)
