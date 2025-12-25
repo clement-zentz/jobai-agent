@@ -9,6 +9,7 @@ from app.schemas.job_application import (
     JobApplicationCreate,
     JobApplicationRead,
     JobApplicationUpdate,
+    JobApplicationReadWithOffer,
 )
 from app.services.job_application import JobApplicationService, get_job_application_service
 
@@ -25,7 +26,7 @@ async def create_job_application(
 ):
     return await service.create_application(session, data)
 
-@router.get("/", response_model=list[JobApplicationRead])
+@router.get("/", response_model=list[JobApplicationReadWithOffer])
 async def list_job_applications(
     session: AsyncSession = Depends(get_session),
     service: JobApplicationService = Depends(get_job_application_service),
@@ -33,18 +34,18 @@ async def list_job_applications(
     return await service.list_applications(session)
 
 @router.patch(
-        "/{application_id}", 
-        response_model=JobApplicationRead, 
+        "/{job_application_id}", 
+        response_model=JobApplicationReadWithOffer, 
         status_code=status.HTTP_200_OK)
 async def update_job_application(
-    application_id: int,
+    job_application_id: int,
     data: JobApplicationUpdate,
     session: AsyncSession = Depends(get_session),
     service: JobApplicationService = Depends(get_job_application_service),
 ):
     try:
         return await service.update_application_by_id(
-            session, application_id, data
+            session, job_application_id, data
         )
     except ValueError:
         raise HTTPException(status_code=404, detail="Application not found")
