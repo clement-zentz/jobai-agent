@@ -22,9 +22,9 @@ class JobApplication(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    job_offer_id: Mapped[int | None] = mapped_column(
+    job_offer_id: Mapped[int] = mapped_column(
         ForeignKey("joboffer.id"),
-        nullable=True,
+        nullable=False,
     )
 
     status: Mapped[ApplicationStatus] = mapped_column(
@@ -51,4 +51,5 @@ class JobApplication(Base):
     job_offer = relationship(
         "JobOffer",
         back_populates="applications",
+        lazy="raise"
     )

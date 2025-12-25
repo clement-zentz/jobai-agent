@@ -17,31 +17,32 @@ class JobApplicationService:
         session: AsyncSession,
         data: JobApplicationCreate,
     ) -> JobApplication:
-        app = JobApplication(**data.model_dump())
-        return await self.repo.create(session, app)
-    
+        job_application = JobApplication(**data.model_dump())
+        return await self.repo.create(session, job_application)
+  
     async def list_applications(
             self,
             session: AsyncSession,
     ) -> list[JobApplication]:
-        return await self.repo.list(session)
-    
+        return await self.repo.list_with_offer(session)
+
     async def update_application_by_id(
         self,
         session: AsyncSession,
-        application_id: int,
+        job_application_id: int,
         data: JobApplicationUpdate,
     ) -> JobApplication:
-        app = await self.repo.get(session, application_id)
-        if not app:
-            raise ValueError("Application not found")
-        
+        job_application = await self.repo.get_by_id_with_offer(
+             session, job_application_id)
+        if not job_application:
+            raise ValueError("Job application not found")
+
         for field, value in data.model_dump(exclude_unset=True).items():
-            setattr(app, field, value)
+            setattr(job_application, field, value)
 
         await session.commit()
-        await session.refresh(app)
-        return app
+        await session.refresh(job_application)
+        return job_application
     
 def get_job_application_service() -> JobApplicationService:
         return JobApplicationService()
