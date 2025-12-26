@@ -1,98 +1,102 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # backend/app/api/job_offers.py
+
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.core.database import get_session
-from app.models.job_offer import JobOffer
 from app.schemas.job_offer import (
-    JobOfferCreate, JobOfferRead, JobOfferUpdate)
+    JobOfferCreate, 
+    JobOfferRead, 
+    JobOfferUpdate
+)
+from app.services.job_offer import JobOfferService, get_job_offer_service
 
 router = APIRouter(prefix="/job-offers", tags=["Job Offers"])
 
 
 # 🟢 CREATE
 @router.post(
-        "/", 
-        response_model=JobOfferRead, 
-        status_code=status.HTTP_201_CREATED,
+    "/",
+    response_model=JobOfferRead,
+    status_code=status.HTTP_201_CREATED,
 )
 async def create_job_offer(
-    job: JobOfferCreate, 
-    session: AsyncSession = Depends(get_session)
+    data: JobOfferCreate,
+    service: JobOfferService = Depends(get_job_offer_service) 
 ):
-    db_job = JobOffer(**job.model_dump())
-    session.add(db_job)
-    await session.commit()
-    await session.refresh(db_job)
-    return db_job
+    """
+    Create a job offer manually.
+    """
+    return await service.create_manual(data)
 
 
 # 🔵 READ ALL
-@router.get("/", response_model=List[JobOfferRead], status_code=status.HTTP_200_OK)
-async def list_job_offers(session: AsyncSession = Depends(get_session)):
-    results = await session.execute(select(JobOffer))
-    jobs = results.scalars().all()
-    return jobs
+@router.get(
+    "/",
+    response_model=List[JobOfferRead],
+    status_code=status.HTTP_200_OK
+)
+async def list_job_offers(
+    platform: str | None = None,
+    company: str | None = None,
+    has_application: bool | None = None,
+    limit: int = 50,
+    offset: int = 0,
+    service: JobOfferService = Depends(get_job_offer_service),
+):
+    """
+    List job offers for dashboard and browsing.
+    """
+    return await service.list_offers(
+        platform=platform,
+        company=company,
+        has_application=has_application,
+        limit=limit,
+        offset=offset,
+    )
 
 
 # 🟣 READ ONE
 @router.get(
-        "/{job_id}", 
-        response_model=JobOfferRead, 
-        status_code=status.HTTP_200_OK,
+    "/{job_id}",
+    response_model=JobOfferRead,
+    status_code=status.HTTP_200_OK,
 )
 async def get_job_offer(
-    job_id: int, 
-    session: AsyncSession = Depends(get_session),
+    job_offer_id: int,
+    service: JobOfferService = Depends(get_job_offer_service),
 ):
-    job = await session.get(JobOffer, job_id)
-    if job is None:
-        raise HTTPException(status_code=404, detail="Job not found")
-    return job
+    """
+    Get a single job offer by ID.
+    """
+    try:
+        return await service.get_offer(job_offer_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job offer not found",
+        )
 
 
 # 🟠 UPDATE (partial - PATCH)
 @router.patch(
-        "/{job_id}", 
-        response_model=JobOfferRead, 
-        status_code=status.HTTP_200_OK
+    "/{job_id}",
+    response_model=JobOfferRead,
+    status_code=status.HTTP_200_OK
 )
 async def update_job_offer(
-    job_id: int, 
-    updated_job: JobOfferUpdate, 
-    session: AsyncSession = Depends(get_session)
+    job_offer_id: int,
+    data: JobOfferUpdate,
+    service: JobOfferService = Depends(get_job_offer_service)
 ):
-    db_job = await session.get(JobOffer, job_id)
-    if db_job is None:
-        raise HTTPException(status_code=404, detail="Job not found")
-
-    # Apply only fields provided by the client
-    update_data = updated_job.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(db_job, key, value)
-
-    session.add(db_job)
-    await session.commit()
-    await session.refresh(db_job)
-    return db_job
-
-
-# 🔴 DELETE
-@router.delete(
-        "/{job_id}", 
-        status_code=status.HTTP_204_NO_CONTENT
-)
-async def delete_job_offer(
-    job_id: int, 
-    session: AsyncSession = Depends(get_session)
-):
-    job = await session.get(JobOffer, job_id)
-    if job is None:
-        raise HTTPException(status_code=404, detail="Job not found")
-    await session.delete(job)
-    await session.commit()
-    return None
+    """
+    Correct or Enrich a Job offer manually.
+    """
+    try:
+        return await service.update_offer(job_offer_id, data)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job offer not found",
+        )
