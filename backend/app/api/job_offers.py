@@ -59,7 +59,7 @@ async def list_job_offers(
 
 # 🟣 READ ONE
 @router.get(
-    "/{job_id}",
+    "/{job_offer_id}",
     response_model=JobOfferRead,
     status_code=status.HTTP_200_OK,
 )
@@ -81,7 +81,7 @@ async def get_job_offer(
 
 # 🟠 UPDATE (partial - PATCH)
 @router.patch(
-    "/{job_id}",
+    "/{job_offer_id}",
     response_model=JobOfferRead,
     status_code=status.HTTP_200_OK
 )
