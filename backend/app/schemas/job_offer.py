@@ -13,6 +13,7 @@ class JobOfferBase(BaseModel):
     canonical_url: str | None = None
     job_key: str | None = None
     platform: str
+    ingestion_source: str | None = "manual"
     rating: float | None = None
     salary: str | None = None
     summary:str | None = None
@@ -37,6 +38,7 @@ class JobOfferUpdate(BaseModel):
     canonical_url: str | None = None
     job_key: str | None = None
     platform: str | None = None
+    ingestion_source: str | None = None
     easy_apply: bool | None = None
     active_hiring: bool | None = None
     posted_at: datetime | None = None

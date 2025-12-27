@@ -20,14 +20,7 @@ class JobOfferService:
         """
         Create a job offer manually (user is the source of truth).
         """
-        payload = data.model_dump(
-            exclude={"platform", "id"}, 
-            exclude_none=True
-        )
-        job_offer = JobOffer(
-            **payload,
-            platform="manual",
-        )
+        job_offer = JobOffer(**data.model_dump())
         await self.repo.add(job_offer)
         await self.session.commit()
         await self.session.refresh(job_offer)

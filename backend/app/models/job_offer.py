@@ -33,6 +33,11 @@ class JobOffer(Base):
     job_key: Mapped [str | None] = mapped_column(String, nullable=True)
     
     platform: Mapped[str] = mapped_column(String, nullable=False)
+    ingestion_source: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+        default="email"
+    )
 
     easy_apply: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     active_hiring: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
