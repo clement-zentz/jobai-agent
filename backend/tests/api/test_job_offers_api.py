@@ -11,14 +11,15 @@ async def test_root_route(async_client):
     assert resp.json() == {"detail": "Not Found"}
 
 
+# --- CREATE Job Offer ---
 @pytest.mark.asyncio
 async def test_create_job_offer(async_client):
     payload = {
-        "title": "Python Developer", 
-        "company": "OpenAI", 
+        "title": "Python Developer",
+        "company": "OpenAI",
         "location": "London",
         "raw_url": "https://example.com/job/python-dev",
-        "platform": "test"
+        "platform": "test",
     }
     response = await async_client.post("/job-offers/", json=payload)
     assert response.status_code == 201
@@ -28,6 +29,7 @@ async def test_create_job_offer(async_client):
     assert data["company"] == payload["company"]
 
 
+# --- LIST Job Offers ---
 @pytest.mark.asyncio
 async def test_list_job_offers(async_client):
     resp = await async_client.get("/job-offers/")
@@ -35,19 +37,19 @@ async def test_list_job_offers(async_client):
     assert resp.json() == []
     job_offers = [
         {
-            "title": "SRE", 
-            "company": "OpsLtd", 
+            "title": "SRE",
+            "company": "OpsLtd",
             "location": "London",
             "raw_url": "https://example.com/job/python-dev1",
-            "platform": "test"
+            "platform": "test",
         },
         {
             "title": "Data Engineer",
             "company": "Pipeline Inc.",
             "location": "London",
             "raw_url": "https://example.com/job/python-dev2",
-            "platform": "test"
-        }
+            "platform": "test",
+        },
     ]
     # Create
     for j in job_offers:
@@ -62,47 +64,51 @@ async def test_list_job_offers(async_client):
     assert "Data Engineer" in titles
 
 
+# --- GET Job Offer ---
 @pytest.mark.asyncio
 async def test_get_job_offer(async_client):
     # Create
     payload = {
-        "title": "Backend developer", 
-        "company": "Nvidia", 
+        "title": "Backend developer",
+        "company": "Nvidia",
         "location": "London",
         "raw_url": "https://example.com/job/python-dev",
-        "platform": "test"
+        "platform": "test",
     }
     create_resp = await async_client.post("/job-offers/", json=payload)
     assert create_resp.status_code == 201
-    job_id = create_resp.json()["id"]
+    job_offer_id = create_resp.json()["id"]
     # Get
-    resp = await async_client.get(f"/job-offers/{job_id}")
+    resp = await async_client.get(f"/job-offers/{job_offer_id}")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["id"] == job_id
+    assert data["id"] == job_offer_id
     assert data["title"] == payload["title"]
     assert data["company"] == payload["company"]
 
 
+# --- UPDATE Job Offer ---
 @pytest.mark.asyncio
 async def test_update_job_offer(async_client):
     # Create
     payload = {
-        "title": "Data analyst", 
-        "company": "DataCorp", 
+        "title": "Data analyst",
+        "company": "DataCorp",
         "location": "Paris",
         "raw_url": "https://example.com/job/python-dev",
-        "platform": "test"
+        "platform": "test",
     }
     create_resp = await async_client.post("/job-offers/", json=payload)
     assert create_resp.status_code == 201
-    job_id = create_resp.json()["id"]
-    # Update only title
+    job_offer_id = create_resp.json()["id"]
+    # Partial update
     update_payload = {"title": "Senior ML Engineer"}
-    update_resp = await async_client.patch(f"/job-offers/{job_id}", json=update_payload)
+    update_resp = await async_client.patch(
+        f"/job-offers/{job_offer_id}", json=update_payload
+    )
     assert update_resp.status_code == 200
     updated = update_resp.json()
-    assert updated["id"] == job_id
+    assert updated["id"] == job_offer_id
     assert updated["title"] == "Senior ML Engineer"
     # company remains unchanged
     assert updated["company"] == "DataCorp"
@@ -112,11 +118,11 @@ async def test_update_job_offer(async_client):
 async def test_delete_job_offer(async_client):
     # Create
     payload = {
-        "title": "Frontend Dev", 
-        "company": "WebCo", 
+        "title": "Frontend Dev",
+        "company": "WebCo",
         "location": "Dublin",
         "raw_url": "https://example.com/job/python-dev",
-        "platform": "test"
+        "platform": "test",
     }
     create_resp = await async_client.post("/job-offers/", json=payload)
     assert create_resp.status_code == 201
