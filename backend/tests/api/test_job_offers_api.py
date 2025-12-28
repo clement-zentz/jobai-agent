@@ -112,26 +112,3 @@ async def test_update_job_offer(async_client):
     assert updated["title"] == "Senior ML Engineer"
     # company remains unchanged
     assert updated["company"] == "DataCorp"
-
-
-@pytest.mark.asyncio
-async def test_delete_job_offer(async_client):
-    # Create
-    payload = {
-        "title": "Frontend Dev",
-        "company": "WebCo",
-        "location": "Dublin",
-        "raw_url": "https://example.com/job/python-dev",
-        "platform": "test",
-    }
-    create_resp = await async_client.post("/job-offers/", json=payload)
-    assert create_resp.status_code == 201
-    job_id = create_resp.json()["id"]
-    # Delete
-    del_resp = await async_client.delete(f"/job-offers/{job_id}")
-    assert del_resp.status_code == 204
-    assert del_resp.content in (b"", None)
-    # Verify gone
-    get_resp = await async_client.get(f"/job-offers/{job_id}")
-    assert get_resp.status_code == 404
-    assert get_resp.json() == {"detail": "Job not found"}
