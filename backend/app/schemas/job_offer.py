@@ -63,3 +63,19 @@ class JobOfferListItem(BaseModel):
     platform: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class JobOfferReadDetail(BaseModel):
+    id: int
+    title: str
+    company: str
+    location: str | None
+    platform: str
+    raw_url: str
+    canonical_url: str
+    salary: str | None
+    summary: str | None
+    description: str | None
+    posted_at: datetime | None
+
+    model_config = ConfigDict(from_attributes=True)
