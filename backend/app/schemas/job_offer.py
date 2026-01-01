@@ -59,7 +59,7 @@ class JobOfferListItem(BaseModel):
     id: int
     title: str
     company: str
-    location: str
+    location: str | None = None
     platform: str
 
     model_config = ConfigDict(from_attributes=True)
