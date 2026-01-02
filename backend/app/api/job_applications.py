@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # File: backend/app/api/job_applications.py
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_session
 from app.schemas.job_application import (
     JobApplicationCreate,
     JobApplicationRead,
@@ -21,18 +19,16 @@ router = APIRouter(prefix="/job-applications", tags=["Job Applications"])
 @router.post("/", response_model=JobApplicationRead, status_code=201)
 async def create_job_application(
     data: JobApplicationCreate,
-    session: AsyncSession = Depends(get_session),
     service: JobApplicationService = Depends(get_job_application_service),
 ):
-    return await service.create_application(session, data)
+    return await service.create_application(data)
 
 
 @router.get("/", response_model=list[JobApplicationReadWithOffer])
 async def list_job_applications(
-    session: AsyncSession = Depends(get_session),
     service: JobApplicationService = Depends(get_job_application_service),
 ):
-    return await service.list_applications(session)
+    return await service.list_applications()
 
 
 @router.patch(
@@ -43,10 +39,9 @@ async def list_job_applications(
 async def update_job_application(
     job_application_id: int,
     data: JobApplicationUpdate,
-    session: AsyncSession = Depends(get_session),
     service: JobApplicationService = Depends(get_job_application_service),
 ):
     try:
-        return await service.update_application_by_id(session, job_application_id, data)
+        return await service.update_application_by_id(job_application_id, data)
     except ValueError:
         raise HTTPException(status_code=404, detail="Application not found") from None

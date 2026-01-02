@@ -8,19 +8,20 @@ from app.models.job_application import JobApplication
 
 
 class JobApplicationRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
     async def create(
         self,
-        session: AsyncSession,
         job_application: JobApplication,
     ) -> JobApplication:
-        session.add(job_application)
-        await session.commit()
-        await session.refresh(job_application)
+        self.session.add(job_application)
+        await self.session.commit()
+        await self.session.refresh(job_application)
         return job_application
 
     async def get_by_id_with_offer(
         self,
-        session: AsyncSession,
         job_application_id: int,
     ) -> JobApplication | None:
         stmt = (
@@ -28,13 +29,12 @@ class JobApplicationRepository:
             .where(JobApplication.id == job_application_id)
             .options(selectinload(JobApplication.job_offer))
         )
-        result = await session.execute(stmt)
+        result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
     async def list_with_offer(
         self,
-        session: AsyncSession,
     ) -> list[JobApplication]:
         stmt = select(JobApplication).options(selectinload(JobApplication.job_offer))
-        result = await session.execute(stmt)
+        result = await self.session.execute(stmt)
         return list(result.scalars().all())
