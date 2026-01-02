@@ -3,7 +3,7 @@
 
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, DateTime, Float, String
+from sqlalchemy import Boolean, DateTime, Float, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -11,6 +11,18 @@ from app.db.base import Base
 
 class JobOffer(Base):
     __tablename__ = "joboffer"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "platform",
+            "job_key",
+            name="uq_job_offer_platform_job_key",
+        ),
+        UniqueConstraint(
+            "raw_url",
+            name="uq_job_offer_raw_url",
+        ),
+    )
 
     id: Mapped[int | None] = mapped_column(primary_key=True, autoincrement=True)
 

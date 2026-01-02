@@ -28,6 +28,50 @@ class JobOfferService:
 
         return job_offer
 
+    async def create_from_email_ingestion(
+        self,
+        data: dict,
+    ) -> JobOffer | None:
+        platform = data.get("platform")
+        job_key = data.get("job_key")
+        raw_url = data.get("raw_url")
+
+        # 1. Strong de-duplication: platform + job_key
+        if platform and job_key:
+            existing = await self.repo.get_by_job_key(
+                platform=platform,
+                job_key=job_key,
+            )
+            if existing:
+                return None
+
+        # 2. Fallback de-duplication: raw_url
+        if raw_url:
+            existing = await self.repo.get_by_raw_url(raw_url)
+            if existing:
+                return None
+
+        # 3. Create new job offer
+        job_offer = JobOffer(
+            title=data.get("title", ""),
+            company=data.get("company", ""),
+            location=data.get("location"),
+            rating=data.get("rating"),
+            salary=data.get("salary"),
+            summary=data.get("summary"),
+            job_key=job_key,
+            platform=platform or "unknown",
+            raw_url=raw_url,
+            canonical_url=data.get("canonical_url"),
+            source_email_id=data.get("source", {}).get("uid"),
+            posted_at=data.get("posted_at"),
+            easy_apply=data.get("easy_apply"),
+            active_hiring=data.get("active_hiring"),
+        )
+
+        await self.repo.add(job_offer)
+        return job_offer
+
     async def get_offer(
         self,
         job_offer_id: int,
