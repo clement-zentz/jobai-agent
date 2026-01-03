@@ -1,5 +1,5 @@
 # Makefile
-.PHONY: up build build-nc restart logs down down-v bash fixture cov
+.PHONY: up build build-nc restart logs down down-v bash ingest fixture cov
 
 dc=docker compose
 
@@ -26,6 +26,9 @@ down-v:
 
 bash:
 	$(dc) exec api bash
+
+ingest:
+	$(dc) exec api python3 -m scripts.python.ingest_emails
 
 fixture:
 	$(dc) exec api python3 -m scripts.python.generate_fixtures
