@@ -16,9 +16,14 @@ from app.schemas.job_application import (
 
 
 class JobApplicationService:
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(
+        self,
+        *,
+        session: AsyncSession,
+        repo: JobApplicationRepository | None = None,
+    ) -> None:
         self.session = session
-        self.repo = JobApplicationRepository(session)
+        self.repo = repo if repo is not None else JobApplicationRepository(session)
 
     async def create_application(
         self,
@@ -61,4 +66,4 @@ class JobApplicationService:
 def get_job_application_service(
     session: AsyncSession = Depends(get_session),
 ) -> JobApplicationService:
-    return JobApplicationService(session)
+    return JobApplicationService(session=session)
