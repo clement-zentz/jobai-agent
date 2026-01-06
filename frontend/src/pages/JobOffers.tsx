@@ -18,13 +18,23 @@ export function JobOffers() {
 
     return (
         <div>
-            <h1>Job Offers</h1>
-            <ul>
+            <h1 className="text-3xl p-2 bg-amber-300">Job Offers</h1>
+            <ul className="list-none text-gray-300">
+                <div className="
+                grid grid-cols-[1fr_1fr_1fr_1fr]
+                text-xl p-2 font-bold border">
+                    <div>Title</div>
+                    <div>Company</div>
+                    <div>Location</div>
+                    <div>Platform</div>
+                </div>
                 {offers.map(o => (
-                    <li key={o.id}>
-                        <strong>{o.title}</strong><br/>
-                        {o.company} ({o.platform})<br />
-                        {o.location}
+                    <li key={o.id} className="
+                    grid grid-cols-[1fr_1fr_1fr_1fr] mb-2 pl-2">
+                        <div className="truncate"><strong>{o.title}</strong></div>
+                        <div>{o.company}</div>
+                        <div>{o.location}</div>
+                        <div>{o.platform}</div>
                     </li>
                 ))}
             </ul>
