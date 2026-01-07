@@ -20,29 +20,30 @@ export function JobOffers() {
   return (
     <div>
       <h1 className="text-3xl p-2 bg-amber-300">Job Offers</h1>
-      <ul className="list-none text-gray-300">
-        <div
-          className="
-                grid grid-cols-[1fr_1fr_1fr_1fr]
-                text-xl p-2 font-bold border"
-        >
-          <div>Title</div>
-          <div>Company</div>
-          <div>Location</div>
-          <div>Platform</div>
-        </div>
+      <div
+        className="
+            grid grid-cols-[1fr_1fr_1fr_1fr]
+            text-xl px-2 py-1 font-bold border"
+      >
+        <span>Title</span>
+        <span>Company</span>
+        <span>Location</span>
+        <span>Platform</span>
+      </div>
+      <ul role="list" className="list-none text-gray-300">
         {offers.map((o) => (
           <li
             key={o.id}
             className="
-                    grid grid-cols-[1fr_1fr_1fr_1fr] mb-2 pl-2"
+                    grid grid-cols-[1fr_1fr_1fr_1fr]
+                    px-2 py-1"
           >
-            <div className="truncate">
+            <span className="truncate">
               <strong>{o.title}</strong>
-            </div>
-            <div>{o.company}</div>
-            <div>{o.location}</div>
-            <div>{o.platform}</div>
+            </span>
+            <span>{o.company}</span>
+            <span>{o.location}</span>
+            <span>{o.platform}</span>
           </li>
         ))}
       </ul>
