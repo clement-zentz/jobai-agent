@@ -1,10 +1,10 @@
-// frontend/src/types/jobOffer.ts
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// File: frontend/src/types/jobOffer.ts
 
-// JobOfferListItem schema
 export interface JobOffer {
-    id: number;
-    title: string;
-    company: string;
-    location?: string | null;
-    platform: string;
+  id: number;
+  title: string;
+  company: string;
+  location?: string | null;
+  platform: string;
 }
