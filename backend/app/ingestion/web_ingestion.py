@@ -3,7 +3,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.job_offer import JobOffer
+from app.models.job_posting import JobPosting
 
 
 async def ingest_scraped_jobs(jobs: list[dict], session: AsyncSession) -> int:
@@ -11,12 +11,12 @@ async def ingest_scraped_jobs(jobs: list[dict], session: AsyncSession) -> int:
 
     for job in jobs:
         # Avoid duplicate by URL
-        stmt = select(JobOffer).where(JobOffer.raw_url == job["raw_url"])
+        stmt = select(JobPosting).where(JobPosting.raw_url == job["raw_url"])
         result = await session.execute(stmt)
         if result.scalars().first():
             continue
 
-        offer = JobOffer(**job)
+        offer = JobPosting(**job)
         session.add(offer)
         inserted += 1
 

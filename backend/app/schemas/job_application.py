@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict
 
 from app.models.job_application import ApplicationStatus
 
-from .job_offer import JobOfferListItem
+from .job_posting import JobPostingListItem
 
 
 class JobApplicationBase(BaseModel):
@@ -15,7 +15,7 @@ class JobApplicationBase(BaseModel):
 
 
 class JobApplicationCreate(JobApplicationBase):
-    job_offer_id: int
+    job_posting_id: int
 
 
 class JobApplicationUpdate(BaseModel):
@@ -33,4 +33,4 @@ class JobApplicationRead(JobApplicationBase):
 
 
 class JobApplicationReadWithOffer(JobApplicationRead):
-    job_offer: JobOfferListItem
+    job_posting: JobPostingListItem

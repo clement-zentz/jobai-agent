@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import app.models  # noqa
-from app.api import job_applications, job_offers
+from app.api import job_applications, job_postings
 from app.core.config import get_settings
 from app.lifespan import lifespan
 
@@ -22,4 +22,4 @@ app.add_middleware(
 
 # Include routes
 app.include_router(job_applications.router)
-app.include_router(job_offers.router)
+app.include_router(job_postings.router)

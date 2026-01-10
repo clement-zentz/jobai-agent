@@ -11,7 +11,7 @@ from testcontainers.postgres import PostgresContainer
 
 from app.core.database import get_session
 from app.main import app
-from app.models.job_offer import Base
+from app.models.job_posting import Base
 
 
 @pytest.fixture()

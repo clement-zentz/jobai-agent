@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# File: backend/tests/unit/services/test_job_offer_service.py
+# File: backend/tests/unit/services/test_job_posting_service.py
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.models.job_offer import JobOffer
-from app.schemas.job_offer import JobOfferCreate, JobOfferUpdate
-from app.services.job_offer import JobOfferService
+from app.models.job_posting import JobPosting
+from app.schemas.job_posting import JobPostingCreate, JobPostingUpdate
+from app.services.job_posting import JobPostingService
 
 
 # --- Setup ---
@@ -31,29 +31,29 @@ def repo():
 
 @pytest.fixture
 def service(session, repo):
-    return JobOfferService(
+    return JobPostingService(
         session=session,
         repo=repo,
     )
 
 
-# --- create_manual ---
+# --- create_job_posting ---
 @pytest.mark.asyncio
-async def test_create_manual_job_offer(
-    service: JobOfferService,
+async def test_create_manual_job_posting(
+    service: JobPostingService,
     repo,
     session,
 ):
-    data = JobOfferCreate(
+    data = JobPostingCreate(
         title="Backend Engineer",
         company="Acme",
         platform="manual",
         raw_url="https://example.com",
     )
 
-    result = await service.create_manual(data)
+    result = await service.create_job_posting(data)
 
-    assert isinstance(result, JobOffer)
+    assert isinstance(result, JobPosting)
     assert result.title == "Backend Engineer"
     assert result.company == "Acme"
 
@@ -65,10 +65,10 @@ async def test_create_manual_job_offer(
 # ---- create_from_email_ingestion ---
 @pytest.mark.asyncio
 async def test_create_from_email_ingestion_returns_none_if_job_key_exists(
-    service: JobOfferService,
+    service: JobPostingService,
     repo,
 ):
-    repo.get_by_job_key.return_value = JobOffer(
+    repo.get_by_job_key.return_value = JobPosting(
         title="Backend Engineer",
         company="Acme",
         platform="indeed",
@@ -97,11 +97,11 @@ async def test_create_from_email_ingestion_returns_none_if_job_key_exists(
 
 @pytest.mark.asyncio
 async def test_create_from_email_ingestion_returns_none_if_raw_url_exists(
-    service: JobOfferService,
+    service: JobPostingService,
     repo,
 ):
     repo.get_by_job_key.return_value = None
-    repo.get_by_raw_url.return_value = JobOffer(
+    repo.get_by_raw_url.return_value = JobPosting(
         title="Backend Engineer",
         company="Aceme",
         platform="indeed",
@@ -123,8 +123,8 @@ async def test_create_from_email_ingestion_returns_none_if_raw_url_exists(
 
 
 @pytest.mark.asyncio
-async def test_create_from_email_ingestion_creates_job_offer(
-    service: JobOfferService,
+async def test_create_from_email_ingestion_creates_job_posting(
+    service: JobPostingService,
     repo,
 ):
     repo.get_by_job_key.return_value = None
@@ -149,7 +149,7 @@ async def test_create_from_email_ingestion_creates_job_offer(
 
     result = await service.create_from_email_ingestion(data)
 
-    assert isinstance(result, JobOffer)
+    assert isinstance(result, JobPosting)
     assert result.title == "Backend Engineer"
     assert result.company == "Acme"
     assert result.platform == "indeed"
@@ -162,7 +162,7 @@ async def test_create_from_email_ingestion_creates_job_offer(
 
 @pytest.mark.asyncio
 async def test_create_from_email_ingestion_uses_defaults(
-    service: JobOfferService,
+    service: JobPostingService,
     repo,
 ):
     repo.get_by_job_key.return_value = None
@@ -182,43 +182,43 @@ async def test_create_from_email_ingestion_uses_defaults(
     repo.add.assert_awaited_once()
 
 
-# --- get_offer ---
+# --- get_job_posting ---
 @pytest.mark.asyncio
-async def test_get_offer_returns_job_offer(
-    service: JobOfferService,
+async def test_get_posting_returns_job_posting(
+    service: JobPostingService,
     repo,
 ):
-    job_offer = JobOffer(title="Backend", company="Acme")
+    job_posting = JobPosting(title="Backend", company="Acme")
 
-    repo.get_by_id.return_value = job_offer
+    repo.get_by_id.return_value = job_posting
 
-    result = await service.get_offer(1)
+    result = await service.get_job_posting(1)
 
-    assert result is job_offer
+    assert result is job_posting
     repo.get_by_id.assert_awaited_once_with(1)
 
 
 @pytest.mark.asyncio
-async def test_get_offer_raises_if_not_found(
-    service: JobOfferService,
+async def test_get_posting_raises_if_not_found(
+    service: JobPostingService,
     repo,
 ):
     repo.get_by_id.return_value = None
 
-    with pytest.raises(ValueError, match="Job offer not found"):
-        await service.get_offer(999)
+    with pytest.raises(ValueError, match="Job Posting not found"):
+        await service.get_job_posting(999)
 
 
-# --- list_offers ---
+# --- list_job_postings ---
 @pytest.mark.asyncio
-async def test_list_offers_calls_repo_with_filters(
-    service: JobOfferService,
+async def test_list_postings_calls_repo_with_filters(
+    service: JobPostingService,
     repo,
 ):
-    expected = [JobOffer(title="Backend", company="Acme")]
+    expected = [JobPosting(title="Backend", company="Acme")]
     repo.list.return_value = expected
 
-    result = await service.list_offers(
+    result = await service.list_job_postings(
         platform="indeed",
         company="Acme",
         has_application=True,
@@ -236,42 +236,42 @@ async def test_list_offers_calls_repo_with_filters(
     )
 
 
-# --- update_offer ---
+# --- update_job_posting ---
 @pytest.mark.asyncio
-async def test_update_offer_fields(
-    service: JobOfferService,
+async def test_update_posting_fields(
+    service: JobPostingService,
     repo,
     session,
 ):
-    job_offer = JobOffer(
+    job_posting = JobPosting(
         title="Backend",
         company="Acme",
         salary=None,
     )
 
-    repo.get_by_id.return_value = job_offer
+    repo.get_by_id.return_value = job_posting
 
-    data = JobOfferUpdate(
+    data = JobPostingUpdate(
         salary="70k-80k",
     )
 
-    result = await service.update_offer(1, data)
+    result = await service.update_job_posting(1, data)
 
-    assert result is job_offer
-    assert job_offer.salary == "70k-80k"
+    assert result is job_posting
+    assert job_posting.salary == "70k-80k"
 
     session.commit.assert_awaited_once()
-    session.refresh.assert_awaited_once_with(job_offer)
+    session.refresh.assert_awaited_once_with(job_posting)
 
 
 @pytest.mark.asyncio
-async def test_update_offer_raises_if_not_found(
-    service: JobOfferService,
+async def test_update_posting_raises_if_not_found(
+    service: JobPostingService,
     repo,
 ):
     repo.get_by_id.return_value = None
 
-    data = JobOfferUpdate(title="New title")
+    data = JobPostingUpdate(title="New title")
 
-    with pytest.raises(ValueError, match="Job offer not found"):
-        await service.update_offer(1, data)
+    with pytest.raises(ValueError, match="Job Posting not found"):
+        await service.update_job_posting(1, data)

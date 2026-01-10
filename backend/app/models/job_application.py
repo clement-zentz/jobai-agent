@@ -23,8 +23,8 @@ class JobApplication(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    job_offer_id: Mapped[int] = mapped_column(
-        ForeignKey("joboffer.id"),
+    job_posting_id: Mapped[int] = mapped_column(
+        ForeignKey("jobposting.id"),
         nullable=False,
     )
 
@@ -47,4 +47,6 @@ class JobApplication(Base):
         DateTime(timezone=True), default=datetime.now(UTC), onupdate=datetime.now(UTC)
     )
 
-    job_offer = relationship("JobOffer", back_populates="applications", lazy="raise")
+    job_posting = relationship(
+        "JobPosting", back_populates="applications", lazy="raise"
+    )

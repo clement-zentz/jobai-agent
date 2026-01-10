@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# File: backend/app/models/job_offer.py
+# File: backend/app/models/job_posting.py
 
 from datetime import UTC, datetime
 
@@ -9,18 +9,18 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 
-class JobOffer(Base):
-    __tablename__ = "joboffer"
+class JobPosting(Base):
+    __tablename__ = "jobposting"
 
     __table_args__ = (
         UniqueConstraint(
             "platform",
             "job_key",
-            name="uq_job_offer_platform_job_key",
+            name="uq_job_posting_platform_job_key",
         ),
         UniqueConstraint(
             "raw_url",
-            name="uq_job_offer_raw_url",
+            name="uq_job_posting_raw_url",
         ),
     )
 
@@ -28,7 +28,7 @@ class JobOffer(Base):
 
     applications = relationship(
         "JobApplication",
-        back_populates="job_offer",
+        back_populates="job_posting",
         cascade="all, delete-orphan",
     )
 

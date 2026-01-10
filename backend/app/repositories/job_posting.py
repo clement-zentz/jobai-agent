@@ -1,32 +1,32 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# File: backend/app/repositories/job_offer.py
+# File: backend/app/repositories/job_posting.py
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.job_offer import JobOffer
+from app.models.job_posting import JobPosting
 
 
-class JobOfferRepository:
+class JobPostingRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def add(self, job_offer: JobOffer) -> None:
-        self.session.add(job_offer)
+    async def add(self, job_posting: JobPosting) -> None:
+        self.session.add(job_posting)
 
     async def get_by_id(
         self,
-        job_offer_id: int,
-    ) -> JobOffer | None:
-        stmt = select(JobOffer).where(JobOffer.id == job_offer_id)
+        job_posting_id: int,
+    ) -> JobPosting | None:
+        stmt = select(JobPosting).where(JobPosting.id == job_posting_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
     async def get_by_raw_url(
         self,
         raw_url: str,
-    ) -> JobOffer | None:
-        stmt = select(JobOffer).where(JobOffer.raw_url == raw_url)
+    ) -> JobPosting | None:
+        stmt = select(JobPosting).where(JobPosting.raw_url == raw_url)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -35,10 +35,10 @@ class JobOfferRepository:
         *,
         platform: str,
         job_key: str,
-    ) -> JobOffer | None:
-        stmt = select(JobOffer).where(
-            JobOffer.platform == platform,
-            JobOffer.job_key == job_key,
+    ) -> JobPosting | None:
+        stmt = select(JobPosting).where(
+            JobPosting.platform == platform,
+            JobPosting.job_key == job_key,
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
@@ -51,42 +51,42 @@ class JobOfferRepository:
         has_application: bool | None = None,
         limit: int = 50,
         offset: int = 0,
-    ) -> list[JobOffer]:
+    ) -> list[JobPosting]:
         """
         List job offers with optional filters.
         Intended for dashboards and browsing.
         """
-        stmt = select(JobOffer)
+        stmt = select(JobPosting)
 
         if platform is not None:
-            stmt = stmt.where(JobOffer.platform == platform)
+            stmt = stmt.where(JobPosting.platform == platform)
 
         if company is not None:
-            stmt = stmt.where(JobOffer.company == company)
+            stmt = stmt.where(JobPosting.company == company)
 
         if has_application is not None:
             if has_application:
-                stmt = stmt.where(JobOffer.applications.any())
+                stmt = stmt.where(JobPosting.applications.any())
             else:
-                stmt = stmt.where(~JobOffer.applications.any())
+                stmt = stmt.where(~JobPosting.applications.any())
 
-        stmt = stmt.order_by(JobOffer.date_scraped.desc()).limit(limit).offset(offset)
+        stmt = stmt.order_by(JobPosting.date_scraped.desc()).limit(limit).offset(offset)
 
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
     async def get_with_applications(
         self,
-        job_offer_id: int,
-    ) -> JobOffer | None:
+        job_posting_id: int,
+    ) -> JobPosting | None:
         """
-        Load a JobOffer with its applications eagerly.
+        Load a JobPosting with its applications eagerly.
         Useful for detail views.
         """
         stmt = (
-            select(JobOffer)
-            .where(JobOffer.id == job_offer_id)
-            .options(selectinload(JobOffer.applications))
+            select(JobPosting)
+            .where(JobPosting.id == job_posting_id)
+            .options(selectinload(JobPosting.applications))
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()

@@ -20,21 +20,21 @@ class JobApplicationRepository:
         await self.session.refresh(job_application)
         return job_application
 
-    async def get_by_id_with_offer(
+    async def get_by_id_with_job_posting(
         self,
         job_application_id: int,
     ) -> JobApplication | None:
         stmt = (
             select(JobApplication)
             .where(JobApplication.id == job_application_id)
-            .options(selectinload(JobApplication.job_offer))
+            .options(selectinload(JobApplication.job_posting))
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def list_with_offer(
+    async def list_with_job_posting(
         self,
     ) -> list[JobApplication]:
-        stmt = select(JobApplication).options(selectinload(JobApplication.job_offer))
+        stmt = select(JobApplication).options(selectinload(JobApplication.job_posting))
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

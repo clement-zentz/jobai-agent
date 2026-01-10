@@ -1,42 +1,42 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# File: backend/app/services/job_offer.py
+# File: backend/app/services/job_posting.py
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
-from app.models.job_offer import JobOffer
-from app.repositories.job_offer import JobOfferRepository
-from app.schemas.job_offer import JobOfferCreate, JobOfferUpdate
+from app.models.job_posting import JobPosting
+from app.repositories.job_posting import JobPostingRepository
+from app.schemas.job_posting import JobPostingCreate, JobPostingUpdate
 
 
-class JobOfferService:
+class JobPostingService:
     def __init__(
         self,
         *,
         session: AsyncSession,
-        repo: JobOfferRepository | None = None,
+        repo: JobPostingRepository | None = None,
     ) -> None:
         self.session = session
-        self.repo = repo if repo is not None else JobOfferRepository(session)
+        self.repo = repo if repo is not None else JobPostingRepository(session)
 
-    async def create_manual(
+    async def create_job_posting(
         self,
-        data: JobOfferCreate,
-    ) -> JobOffer:
+        data: JobPostingCreate,
+    ) -> JobPosting:
         """
-        Create a job offer manually (user is the source of truth).
+        Create a Job Posting manually (user is the source of truth).
         """
-        job_offer = JobOffer(**data.model_dump())
-        await self.repo.add(job_offer)
+        job_posting = JobPosting(**data.model_dump())
+        await self.repo.add(job_posting)
         await self.session.commit()
-        await self.session.refresh(job_offer)
+        await self.session.refresh(job_posting)
 
-        return job_offer
+        return job_posting
 
     async def create_from_email_ingestion(
         self,
         data: dict,
-    ) -> JobOffer | None:
+    ) -> JobPosting | None:
         platform = data.get("platform")
         job_key = data.get("job_key")
         raw_url = data.get("raw_url")
@@ -57,8 +57,8 @@ class JobOfferService:
             if existing:
                 return None
 
-        # 3. Create new job offer
-        job_offer = JobOffer(
+        # 3. Create new job job_posting
+        job_posting = JobPosting(
             title=data.get("title", ""),
             company=data.get("company", ""),
             location=data.get("location"),
@@ -75,19 +75,19 @@ class JobOfferService:
             active_hiring=data.get("active_hiring"),
         )
 
-        await self.repo.add(job_offer)
-        return job_offer
+        await self.repo.add(job_posting)
+        return job_posting
 
-    async def get_offer(
+    async def get_job_posting(
         self,
-        job_offer_id: int,
-    ) -> JobOffer:
-        job_offer = await self.repo.get_by_id(job_offer_id)
-        if not job_offer:
-            raise ValueError("Job offer not found")
-        return job_offer
+        job_posting_id: int,
+    ) -> JobPosting:
+        job_posting = await self.repo.get_by_id(job_posting_id)
+        if not job_posting:
+            raise ValueError("Job Posting not found")
+        return job_posting
 
-    async def list_offers(
+    async def list_job_postings(
         self,
         *,
         platform: str | None = None,
@@ -95,7 +95,7 @@ class JobOfferService:
         has_application: bool | None = None,
         limit: int = 50,
         offset: int = 0,
-    ) -> list[JobOffer]:
+    ) -> list[JobPosting]:
         return await self.repo.list(
             platform=platform,
             company=company,
@@ -104,24 +104,24 @@ class JobOfferService:
             offset=offset,
         )
 
-    async def update_offer(
+    async def update_job_posting(
         self,
-        job_offer_id: int,
-        data: JobOfferUpdate,
-    ) -> JobOffer:
-        job_offer = await self.repo.get_by_id(job_offer_id)
-        if not job_offer:
-            raise ValueError("Job offer not found")
+        job_posting_id: int,
+        data: JobPostingUpdate,
+    ) -> JobPosting:
+        job_posting = await self.repo.get_by_id(job_posting_id)
+        if not job_posting:
+            raise ValueError("Job Posting not found")
 
         for field, value in data.model_dump(exclude_unset=True).items():
-            setattr(job_offer, field, value)
+            setattr(job_posting, field, value)
 
         await self.session.commit()
-        await self.session.refresh(job_offer)
-        return job_offer
+        await self.session.refresh(job_posting)
+        return job_posting
 
 
-def get_job_offer_service(
+def get_job_posting_service(
     session: AsyncSession = Depends(get_session),
-) -> JobOfferService:
-    return JobOfferService(session=session)
+) -> JobPostingService:
+    return JobPostingService(session=session)

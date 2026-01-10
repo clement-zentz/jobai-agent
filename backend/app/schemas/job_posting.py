@@ -1,4 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
+# File: backend/app/schemas/job_posting.py
+
+# SPDX-License-Identifier: AGPL-3.0-or-later
 # File: backend/app/schemas/job_offer.py
 
 from datetime import datetime
@@ -6,7 +9,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 
-class JobOfferBase(BaseModel):
+class JobPostingBase(BaseModel):
     title: str
     company: str
     location: str | None = None
@@ -25,11 +28,11 @@ class JobOfferBase(BaseModel):
     source_email_id: str | None = None
 
 
-class JobOfferCreate(JobOfferBase):
+class JobPostingCreate(JobPostingBase):
     pass
 
 
-class JobOfferUpdate(BaseModel):
+class JobPostingUpdate(BaseModel):
     title: str | None = None
     company: str | None = None
     rating: float | None = None
@@ -48,14 +51,14 @@ class JobOfferUpdate(BaseModel):
     source_email_id: str | None = None
 
 
-class JobOfferRead(JobOfferBase):
+class JobPostingRead(JobPostingBase):
     id: int
     date_scraped: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class JobOfferListItem(BaseModel):
+class JobPostingListItem(BaseModel):
     id: int
     title: str
     company: str
@@ -65,7 +68,7 @@ class JobOfferListItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class JobOfferReadDetail(BaseModel):
+class JobPostingReadDetail(BaseModel):
     id: int
     title: str
     company: str
