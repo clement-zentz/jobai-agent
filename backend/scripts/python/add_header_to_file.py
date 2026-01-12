@@ -106,8 +106,11 @@ def main(paths: list[str]) -> int:
         new_lines.append("\n")
         new_lines.extend(lines[idx:])
 
-        if new_lines != lines:
-            path.write_text("".join(new_lines))
+        # --- Normalize EOF: exactly one trailing newline ---
+        text = "".join(new_lines).rstrip("\n") + "\n"
+
+        if text != "".join(lines):
+            path.write_text(text)
             print(f"Updated header: {path}")
             changed = True
 
