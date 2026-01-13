@@ -109,10 +109,20 @@ def main(paths: list[str]) -> int:
 
         # --- Insert canonical header ---
         new_lines.extend(header)
-        new_lines.append("\n")
 
         # Skip existing blank lines before code
         idx = skip_blank_lines(lines, idx)
+
+        # Detect next top-level statement
+        next_line = lines[idx] if idx < len(lines) else ""
+
+        if next_line.lstrip().startswith(("def ", "class ")):
+            # PEP 8: two blank lines before top-level defs/classes
+            new_lines.append("\n")
+            new_lines.append("\n")
+        else:
+            # Default: one blank line
+            new_lines.append("\n")
 
         new_lines.extend(lines[idx:])
 
