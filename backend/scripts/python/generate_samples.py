@@ -3,10 +3,10 @@
 # File: backend/scripts/python/generate_samples.py
 
 from app.core.config import get_settings
-from app.extraction.email.email_alert_fetcher import EmailAlertFetcher
-from app.extraction.email.parser_base import EmailParser
-from app.extraction.email.parsers import indeed, linkedin
-from app.generators.samples import SampleGenerator
+from app.ingestion.extraction.email.email_alert_fetcher import EmailAlertFetcher
+from app.ingestion.extraction.email.parser_base import EmailParser
+from app.ingestion.extraction.email.parsers import indeed, linkedin
+from app.ingestion.generators.samples import SampleGenerator
 
 settings = get_settings()
 

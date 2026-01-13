@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # File: backend/tests/unit/parsers/test_indeed_parser.py
+
 import json
 from datetime import datetime
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
-from app.extraction.email.parsers.indeed import IndeedParser
+from app.ingestion.extraction.email.parsers.indeed import IndeedParser
 
 # --- Fixtures paths ---
 ROOT_DIR = Path(__file__).resolve().parents[2]

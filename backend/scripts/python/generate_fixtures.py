@@ -5,11 +5,11 @@
 import logging
 
 from app.core.config import get_settings
-from app.extraction.email.email_alert_fetcher import EmailAlertFetcher
-from app.extraction.email.parser_base import EmailParser
-from app.extraction.email.parsers.indeed import IndeedParser
-from app.extraction.email.parsers.linkedin import LinkedInParser
-from app.generators.fixtures import FixtureGenerator
+from app.ingestion.extraction.email.email_alert_fetcher import EmailAlertFetcher
+from app.ingestion.extraction.email.parser_base import EmailParser
+from app.ingestion.extraction.email.parsers.indeed import IndeedParser
+from app.ingestion.extraction.email.parsers.linkedin import LinkedInParser
+from app.ingestion.generators.fixtures import FixtureGenerator
 
 settings = get_settings()
 

@@ -5,8 +5,8 @@ import logging
 
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
-from app.extraction.email.email_alert_fetcher import EmailAlertFetcher
-from app.extraction.email.job_extraction_service import JobExtractionService
+from app.ingestion.extraction.email.email_alert_fetcher import EmailAlertFetcher
+from app.ingestion.extraction.email.job_extraction_service import JobExtractionService
 from app.models.job_posting import JobPosting
 from app.services.job_posting import JobPostingService
 
