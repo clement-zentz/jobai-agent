@@ -26,7 +26,7 @@ class JobPosting(Base):
 
     id: Mapped[int | None] = mapped_column(primary_key=True, autoincrement=True)
 
-    applications = relationship(
+    job_applications = relationship(
         "JobApplication",
         back_populates="job_posting",
         cascade="all, delete-orphan",

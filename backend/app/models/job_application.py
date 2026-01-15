@@ -48,5 +48,7 @@ class JobApplication(Base):
     )
 
     job_posting = relationship(
-        "JobPosting", back_populates="applications", lazy="raise"
+        "JobPosting",
+        back_populates="job_applications",
+        lazy="raise",
     )

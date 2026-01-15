@@ -67,9 +67,9 @@ class JobPostingRepository:
 
         if has_application is not None:
             if has_application:
-                stmt = stmt.where(JobPosting.applications.any())
+                stmt = stmt.where(JobPosting.job_applications.any())
             else:
-                stmt = stmt.where(~JobPosting.applications.any())
+                stmt = stmt.where(~JobPosting.job_applications.any())
 
         stmt = stmt.order_by(JobPosting.date_scraped.desc()).limit(limit).offset(offset)
 
@@ -87,7 +87,7 @@ class JobPostingRepository:
         stmt = (
             select(JobPosting)
             .where(JobPosting.id == job_posting_id)
-            .options(selectinload(JobPosting.applications))
+            .options(selectinload(JobPosting.job_applications))
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
