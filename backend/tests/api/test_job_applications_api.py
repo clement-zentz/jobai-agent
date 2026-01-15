@@ -34,7 +34,7 @@ async def test_create_job_application_success(
         "/job-applications",
         json={
             "job_posting_id": job_posting.id,
-            "application_date": "2025-01-01",
+            "job_application_date": "2025-01-01",
             "notes": "First job application",
         },
     )
@@ -63,7 +63,7 @@ async def test_create_job_application_with_invalid_job_posting_id(
         "/job-applications",
         json={
             "job_posting_id": 99999,
-            "application_date": "2025-01-01",
+            "job_application_date": "2025-01-01",
             "notes": "First job application",
         },
     )
@@ -91,7 +91,7 @@ async def test_list_job_applications(
 
     job_application = JobApplication(
         job_posting_id=job_posting.id,
-        application_date=date(2025, 1, 10),
+        job_application_date=date(2025, 1, 10),
         notes="Applied via website",
     )
     test_session.add(job_application)
@@ -126,7 +126,7 @@ async def test_update_job_application_success(
 
     job_application = JobApplication(
         job_posting_id=job_posting.id,
-        application_date=date(2025, 1, 5),
+        job_application_date=date(2025, 1, 5),
         notes="Initial notes",
     )
     test_session.add(job_application)

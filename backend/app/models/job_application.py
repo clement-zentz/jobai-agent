@@ -35,7 +35,7 @@ class JobApplication(Base):
         nullable=False,
     )
 
-    application_date: Mapped[date] = mapped_column(Date, nullable=False)
+    job_application_date: Mapped[date] = mapped_column(Date, nullable=False)
 
     notes: Mapped[str | None]
 

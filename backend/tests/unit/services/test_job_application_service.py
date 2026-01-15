@@ -53,7 +53,7 @@ async def test_create_application_raises_if_job_posting_not_found(
 
     data = JobApplicationCreate(
         job_posting_id=123,
-        application_date=date(2025, 1, 1),
+        job_application_date=date(2025, 1, 1),
         notes="Test",
     )
 
@@ -84,7 +84,7 @@ async def test_create_application_success(
 
     data = JobApplicationCreate(
         job_posting_id=1,
-        application_date=date(2025, 1, 1),
+        job_application_date=date(2025, 1, 1),
         notes="Applied",
     )
 

@@ -11,7 +11,7 @@ from .job_posting import JobPostingListItem
 
 
 class JobApplicationBase(BaseModel):
-    application_date: date
+    job_application_date: date
     notes: str | None = None
 
 
