@@ -10,7 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 
-class ApplicationStatus(str, Enum):
+class JobApplicationStatus(str, Enum):
     APPLIED = "applied"
     INTERVIEW = "interview"
     TECHNICAL_TEST = "technical_test"
@@ -29,9 +29,9 @@ class JobApplication(Base):
         nullable=False,
     )
 
-    status: Mapped[ApplicationStatus] = mapped_column(
-        SAEnum(ApplicationStatus, name="application_status"),
-        default=ApplicationStatus.APPLIED,
+    status: Mapped[JobApplicationStatus] = mapped_column(
+        SAEnum(JobApplicationStatus, name="job_application_status"),
+        default=JobApplicationStatus.APPLIED,
         nullable=False,
     )
 

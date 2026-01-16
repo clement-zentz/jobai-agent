@@ -5,7 +5,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 
-from app.models.job_application import ApplicationStatus
+from app.models.job_application import JobApplicationStatus
 
 from .job_posting import JobPostingListItem
 
@@ -20,13 +20,13 @@ class JobApplicationCreate(JobApplicationBase):
 
 
 class JobApplicationUpdate(BaseModel):
-    status: ApplicationStatus | None = None
+    status: JobApplicationStatus | None = None
     notes: str | None = None
 
 
 class JobApplicationRead(JobApplicationBase):
     id: int
-    status: ApplicationStatus
+    status: JobApplicationStatus
     created_at: datetime
     updated_at: datetime
 
